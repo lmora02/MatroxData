@@ -295,7 +295,7 @@ def generar_estadisticos_datos_especificos():
  
 # Función para abrir la ventana de obtener datos de la cámara
 def obtener_datos_camara():
-    global monitor_running
+    global monitor_running, ventana_archivos
     monitor_running = True
     # Función para procesar la dirección IP ingresada y establecer la conexión SMB
     def procesar_direccion_ip():
@@ -308,10 +308,7 @@ def obtener_datos_camara():
             if ping_exit_code == 0:  # Ping exitoso
                 try:
                     # Intentar establecer conexión SMB a través de la ventana de comandos de Windows
-                    # Desconectar la conexión SMB
-                    #comando_desconectar = f"net use \\\\{direccion_ip}\\IPC$ /delete"
-                    #subprocess.run(comando_desconectar, shell=True, check=True)
-                    #print(f"Conexión SMB cerrada con {ip}")
+
                     comando = f"net use \\\\{direccion_ip}\\IPC$ /user:NAM\\mtxuser Matrox"
                     subprocess.run(comando, shell=True, check=True)
                     print(f"Conexión SMB establecida con {direccion_ip}")
@@ -319,6 +316,8 @@ def obtener_datos_camara():
                     # Mostrar mensaje de autenticación exitosa
                     messagebox.showinfo("Autenticación Exitosa", "Autenticación exitosa con la dirección IP especificada.")
 
+                    #Ocultar la ventana para ingresar la IP
+                    ventana_ip.destroy()
                     # Abrir ventana para seleccionar archivos a copiar (JPG, PNG, TXT)
                     abrir_ventana_seleccion_archivos()
                     # Mostrar ventana con la dirección IP y estado de la conexión
@@ -354,6 +353,8 @@ def obtener_datos_camara():
             subprocess.run(comando_desconectar, shell=True, check=True)
             print(f"Conexión SMB cerrada con {direccion_ip}")
             ventana_estado.destroy()
+            if ventana_archivos:
+                ventana_archivos.destroy()
             messagebox.showinfo("Conexión Cerrada", f"Conexión cerrada con {direccion_ip}.")
         def on_closing():
             cerrar_conexion()
@@ -390,12 +391,16 @@ def obtener_datos_camara():
                     if direccion_ip == direccion_ip_global:  # Solo actualizar si es la misma dirección IP
                         estado_label.config(text=f"Dirección IP: {direccion_ip}\nEstado: Desconectado")
                         messagebox.showwarning("Conexión Perdida", f"Se ha perdido la conexión con {direccion_ip}.")
+                        ventana_estado.destroy()
+                        if ventana_archivos:
+                            ventana_archivos.destroy()
                         break  # Salir del bucle de monitoreo
 
                 time.sleep(5)  # Esperar 5 segundos antes de verificar de nuevo
 
     # Función para abrir la ventana de selección de archivos a copiar (JPG, PNG, TXT)
     def abrir_ventana_seleccion_archivos():
+        global ventana_archivos
         ventana_archivos = tk.Toplevel(root)
         ventana_archivos.title("Seleccionar Archivos a Copiar")
         ventana_archivos.geometry("300x200")  # Establecer el tamaño de la ventana
