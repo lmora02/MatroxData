@@ -500,4 +500,3 @@ boton_obtener_datos.pack(pady=5, anchor="w", padx=115)
 # Iniciar el bucle de eventos de la interfaz gráfica
 root.mainloop()
 
-#Test to commit#Test to branch tacos de canasta
