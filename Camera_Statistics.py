@@ -1,4 +1,6 @@
 import os
+import threading
+import time
 import pandas as pd
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
@@ -293,8 +295,12 @@ def generar_estadisticos_datos_especificos():
  
 # Función para abrir la ventana de obtener datos de la cámara
 def obtener_datos_camara():
+    global monitor_running
+    monitor_running = True
     # Función para procesar la dirección IP ingresada y establecer la conexión SMB
     def procesar_direccion_ip():
+        global direccion_ip_global, monitor_conexion, monitor_running
+
         direccion_ip = entrada_ip.get()  # Obtener la dirección IP ingresada desde el campo de entrada
         if direccion_ip:
             # Realizar prueba de ping para verificar la conexión
@@ -306,7 +312,7 @@ def obtener_datos_camara():
                     #comando_desconectar = f"net use \\\\{direccion_ip}\\IPC$ /delete"
                     #subprocess.run(comando_desconectar, shell=True, check=True)
                     #print(f"Conexión SMB cerrada con {ip}")
-                    comando = f"net use \\\\{direccion_ip}\\IPC$ /user:NAM\\mtxuser Ma  trox"
+                    comando = f"net use \\\\{direccion_ip}\\IPC$ /user:NAM\\mtxuser Matrox"
                     subprocess.run(comando, shell=True, check=True)
                     print(f"Conexión SMB establecida con {direccion_ip}")
 
@@ -315,16 +321,79 @@ def obtener_datos_camara():
 
                     # Abrir ventana para seleccionar archivos a copiar (JPG, PNG, TXT)
                     abrir_ventana_seleccion_archivos()
+                    # Mostrar ventana con la dirección IP y estado de la conexión
+                    mostrar_ventana_estado(direccion_ip)
+
+                    # Iniciar monitoreo de conexión
+                    monitor_running = True
+                    monitor_conexion = threading.Thread(target=monitorizar_conexion, args=(direccion_ip,))
+                    monitor_conexion.start()
 
                 except subprocess.CalledProcessError as e:
                     # Mostrar mensaje de error si no se pudo establecer la conexión SMB
                     messagebox.showerror("Error", f"No se pudo establecer la conexión SMB con {direccion_ip}: {str(e)}")
                     # Abrir ventana para ingresar nuevas credenciales
                     abrir_ventana_credenciales(direccion_ip)
+            else:
+                # Si no se puede hacer ping, mostrar mensaje de error
+                messagebox.showerror("Error", f"No se pudo hacer ping a la dirección IP {direccion_ip}.")
         else:
             # Si no se ingresó ninguna dirección IP, muestra un mensaje de error
             messagebox.showerror("Error", "Debes ingresar una dirección IP válida.")
-    
+
+        # Función para mostrar la ventana con la dirección IP y estado de conexión
+    def mostrar_ventana_estado(direccion_ip):
+        global direccion_ip_global, ventana_estado, estado_label
+        direccion_ip_global = direccion_ip
+
+        # Función para cerrar la conexión y la ventana de estado
+        def cerrar_conexion():
+            global monitor_running
+            monitor_running= False
+            comando_desconectar = f"net use \\\\{direccion_ip}\\IPC$ /delete"
+            subprocess.run(comando_desconectar, shell=True, check=True)
+            print(f"Conexión SMB cerrada con {direccion_ip}")
+            ventana_estado.destroy()
+            messagebox.showinfo("Conexión Cerrada", f"Conexión cerrada con {direccion_ip}.")
+        def on_closing():
+            cerrar_conexion()
+            messagebox.showinfo("Conexion Perdida", f"Se ha perdido la conexión con {direccion_ip}.")
+
+        # Función para actualizar el estado de conexión
+        def actualizar_estado(estado):
+            estado_label.config(text=f"Dirección IP: {direccion_ip}\nEstado: {estado}")
+
+        # Crear ventana para mostrar el estado de la conexión
+        ventana_estado = tk.Toplevel(root)
+        ventana_estado.title("Estado de Conexión")
+        ventana_estado.geometry("300x150")  # Establecer el tamaño de la ventana
+        ventana_estado.resizable(False, False)  # Evitar que la ventana se redimensione
+
+        # Mostrar la dirección IP y estado de la conexión
+        estado_label = ttk.Label(ventana_estado, text=f"Dirección IP: {direccion_ip}\nEstado: Conectado")
+        estado_label.pack(pady=20)
+
+        # Botón para cerrar la conexión
+        boton_cerrar = ttk.Button(ventana_estado, text="Cerrar Conexión", command=cerrar_conexion)
+        boton_cerrar.pack(pady=10)
+
+        #Configurar manejador de enventos para el cierre de la ventana
+        ventana_estado.protocol("WM_DELETE_WINDOW", on_closing)
+
+    def monitorizar_conexion(direccion_ip):
+            global direccion_ip_global, estado_label
+
+            while monitor_running:
+                # Realizar ping para verificar la conexión
+                ping_exit_code = subprocess.call(['ping', '-n', '1', direccion_ip], stdout=subprocess.DEVNULL)
+                if ping_exit_code != 0:  # Si el ping falla, actualizar estado a desconectado
+                    if direccion_ip == direccion_ip_global:  # Solo actualizar si es la misma dirección IP
+                        estado_label.config(text=f"Dirección IP: {direccion_ip}\nEstado: Desconectado")
+                        messagebox.showwarning("Conexión Perdida", f"Se ha perdido la conexión con {direccion_ip}.")
+                        break  # Salir del bucle de monitoreo
+
+                time.sleep(5)  # Esperar 5 segundos antes de verificar de nuevo
+
     # Función para abrir la ventana de selección de archivos a copiar (JPG, PNG, TXT)
     def abrir_ventana_seleccion_archivos():
         ventana_archivos = tk.Toplevel(root)
