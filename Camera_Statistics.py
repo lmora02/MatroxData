@@ -1,3 +1,62 @@
+"""
+Camera Statistics Script
+========================
+
+This script provides a utility to manage and process files within a specified directory. The main features include:
+- Classifying files based on their extensions.
+- Generating statistical summaries.
+- Handling image files.
+
+Modules Imported:
+-----------------
+- os: Provides functions to interact with the operating system.
+- pandas: Used for data manipulation and analysis.
+- tkinter: Provides classes for creating graphical user interfaces.
+- openpyxl.styles: Used for styling Excel files.
+- shutil: Offers a number of high-level operations on files and collections of files.
+- subprocess: Allows spawning new processes, connecting to their input/output/error pipes, and obtaining their return codes.
+- PIL (Pillow): Adds image processing capabilities to Python.
+
+Global Variables:
+-----------------
+- directorio_actual: Stores the path of the current directory where the script is located.
+- carpeta_seleccionada: Global variable to store the selected folder.
+- ruta_archivo_estadisticos: Global variable to store the path of the statistical file.
+
+Functions:
+----------
+- clasificar_archivos(carpeta_principal)
+    Classifies files into subfolders based on their extensions.
+    
+    Parameters:
+    - carpeta_principal (str): The main directory to classify files.
+
+- seleccionar_carpeta_principal()
+    Opens a file dialog to select the main folder and calls the classification function.
+
+- buscar_subcarpetas_txt(carpeta)
+    Searches for all subfolders named 'TXT' within the specified directory.
+    
+    Parameters:
+    - carpeta (str): The directory to search for 'TXT' subfolders.
+
+- generar_estadisticos()
+    Generates statistics from text files in the selected folder using file dialogs.
+
+- abrir_estadisticos()
+    Opens the generated statistics file if available.
+
+- actualizar_etiqueta_ruta()
+    Updates the GUI label with the path of the statistics file.
+
+- generar_estadisticos_datos_especificos()
+    Opens a new window to specify parameters and generate specific statistics.
+
+- obtener_datos_camara()
+    Opens a window to enter IP address for camera connection and file selection.
+
+"""
+
 import os
 import pandas as pd
 import tkinter as tk
