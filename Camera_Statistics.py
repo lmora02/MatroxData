@@ -306,7 +306,7 @@ def obtener_datos_camara():
                     #comando_desconectar = f"net use \\\\{direccion_ip}\\IPC$ /delete"
                     #subprocess.run(comando_desconectar, shell=True, check=True)
                     #print(f"Conexión SMB cerrada con {ip}")
-                    comando = f"net use \\\\{direccion_ip}\\IPC$ /user:NAM\\mtxuser Mtrox"
+                    comando = f"net use \\\\{direccion_ip}\\IPC$ /user:NAM\\mtxuser Ma  trox"
                     subprocess.run(comando, shell=True, check=True)
                     print(f"Conexión SMB establecida con {direccion_ip}")
 
