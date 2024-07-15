@@ -498,4 +498,3 @@ boton_obtener_datos = ttk.Button(root, text="Obtener datos de la cámara", comma
 boton_obtener_datos.pack(pady=5, anchor="w", padx=115)
 
 # Iniciar el bucle de eventos de la interfaz gráfica
-root.mainloop()
