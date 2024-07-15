@@ -403,7 +403,7 @@ def obtener_datos_camara():
         global ventana_archivos
         ventana_archivos = tk.Toplevel(root)
         ventana_archivos.title("Seleccionar Archivos a Copiar")
-        ventana_archivos.geometry("300x200")  # Establecer el tamaño de la ventana
+        ventana_archivos.geometry("300x300")  # Establecer el tamaño de la ventana
         ventana_archivos.resizable(False, False)  # Evitar que la ventana se redimensione
 
         # Etiqueta para instrucciones
@@ -425,9 +425,49 @@ def obtener_datos_camara():
         check_txt = ttk.Checkbutton(ventana_archivos, text="TXT", variable=var_txt)
         check_txt.pack()
 
+        # Botón para extraer archivos
+        boton_extraer = ttk.Button(ventana_archivos, text="Extraer Archivos", command=lambda: extraer_archivos(var_jpg, var_png, var_txt))
+        boton_extraer.pack(pady=10)
         # Botón para cerrar la ventana de selección de archivos
         boton_cerrar = ttk.Button(ventana_archivos, text="Cerrar", command=ventana_archivos.destroy)
         boton_cerrar.pack(pady=10)
+
+        # Función para extraer archivos seleccionados
+    def extraer_archivos(var_jpg, var_png, var_txt):
+         # Abrir el explorador de archivos para seleccionar la carpeta de destino
+        carpeta_destino = filedialog.askdirectory(title="Selecciona la carpeta de destino")
+        if not carpeta_destino:
+            return  # Si no se seleccionó ninguna carpeta, salir de la función
+
+            # Lista de extensiones seleccionadas
+        extensiones_seleccionadas = []
+        if var_jpg.get():
+            extensiones_seleccionadas.append(".jpg")
+        if var_png.get():
+            extensiones_seleccionadas.append(".png")
+        if var_txt.get():
+            extensiones_seleccionadas.append(".txt")
+
+        if not extensiones_seleccionadas:
+            messagebox.showwarning("Advertencia", "No se ha seleccionado ningún tipo de archivo para copiar.")
+            return
+
+        # Ruta de origen en la cámara
+        ruta_origen = f"\\\\{direccion_ip_global}\\mtxuser"
+
+        # Copiar los archivos seleccionados a la carpeta de destino
+        for raiz, dirs, archivos in os.walk(ruta_origen):
+            for archivo in archivos:
+                if any(archivo.lower().endswith(ext) for ext in extensiones_seleccionadas):
+                    ruta_completa_origen = os.path.join(raiz, archivo)
+                    ruta_completa_destino = os.path.join(carpeta_destino, archivo)
+                    try:
+                        shutil.copy2(ruta_completa_origen, ruta_completa_destino)
+                        print(f"Archivo copiado: {ruta_completa_origen} -> {ruta_completa_destino}")
+                    except Exception as e:
+                        print(f"No se pudo copiar el archivo {ruta_completa_origen}: {str(e)}")
+
+        messagebox.showinfo("Operación Completada", "Archivos copiados exitosamente.")
 
     # Función para abrir la ventana de ingreso de nuevas credenciales
     def abrir_ventana_credenciales(direccion_ip):
