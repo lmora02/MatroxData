@@ -455,7 +455,24 @@ def obtener_datos_camara():
         # Ruta de origen en la cámara
         ruta_origen = f"\\\\{direccion_ip_global}\\mtxuser"
 
-        # Copiar los archivos seleccionados a la carpeta de destino
+        # Crear una ventana de progreso
+        ventana_progreso = tk.Toplevel(root)
+        ventana_progreso.title("Progreso de Copia de Archivos")
+        ventana_progreso.geometry("300x100")
+        ventana_progreso.resizable(False, False)
+
+        etiqueta_progreso = ttk.Label(ventana_progreso, text="Copiando archivos...")
+        etiqueta_progreso.pack(pady=10)
+
+        barra_progreso = ttk.Progressbar(ventana_progreso, orient="horizontal", length=200, mode="determinate")
+        barra_progreso.pack(pady=10)
+
+        # Contar el número total de archivos a copiar
+        total_archivos = sum(1 for _, _, archivos in os.walk(ruta_origen) if any(
+            archivo.lower().endswith(ext) for ext in extensiones_seleccionadas for archivo in archivos))
+        barra_progreso["maximum"] = total_archivos
+
+    # Copiar los archivos seleccionados a la carpeta de destino
         for raiz, dirs, archivos in os.walk(ruta_origen):
             for archivo in archivos:
                 if any(archivo.lower().endswith(ext) for ext in extensiones_seleccionadas):
@@ -523,19 +540,117 @@ def obtener_datos_camara():
     ventana_ip = tk.Toplevel(root)
     ventana_ip.title("Ingresar Dirección IP de la Cámara")
     ventana_ip.geometry("300x150")  # Establecer el tamaño de la ventana
-    ventana_ip.resizable(False, False)  # Evitar que la ventana se redimensione
-    
+    ventana_ip.resizable(True, True)  # Evitar que la ventana se redimensione
+
     # Etiqueta para instrucciones
     etiqueta_instrucciones = ttk.Label(ventana_ip, text="Ingresa la dirección IP de la cámara:")
     etiqueta_instrucciones.pack(pady=10)
-    
+
     # Campo de texto para ingresar la dirección IP
     entrada_ip = ttk.Entry(ventana_ip, width=30)
     entrada_ip.pack(pady=5)
-    
+
     # Botón para procesar la dirección IP ingresada
     boton_procesar_ip = ttk.Button(ventana_ip, text="Procesar", command=procesar_direccion_ip)
     boton_procesar_ip.pack(pady=10)
+
+    # Botón para cargar direcciones IP desde archivo Excel
+    boton_cargar_excel = ttk.Button(ventana_ip, text="Cargar IPs desde Excel", command=cargar_ips_desde_excel)
+    boton_cargar_excel.pack(pady=10)
+
+
+def cargar_ips_desde_excel():
+    # Abrir diálogo para seleccionar el archivo Excel
+    archivo_excel = filedialog.askopenfilename(filetypes=[("Archivos de Excel", "*.xlsx *.xls")])
+    if not archivo_excel:
+        return  # Si no se seleccionó ningún archivo, salir de la función
+
+    # Leer el archivo Excel
+    try:
+        df = pd.read_excel(archivo_excel, usecols=[0, 1],
+                           skiprows=1)  # Leer las columnas A y B, y omitir la primera fila
+        df.dropna(subset=[df.columns[1]], inplace=True)  # Eliminar filas donde la columna B esté vacía
+        direcciones_ip = df.apply(lambda row: f"{row[1]} - Estación {row[0]}", axis=1).tolist()
+        mostrar_ventana_seleccion_ips(direcciones_ip)
+    except Exception as e:
+        messagebox.showerror("Error", f"No se pudo leer el archivo: {str(e)}")
+
+
+def mostrar_ventana_seleccion_ips(direcciones_ip):
+    ventana_seleccion_ips = tk.Toplevel(root)
+    ventana_seleccion_ips.title("Seleccionar Direcciones IP")
+
+    # Ajustar la altura de la ventana según la cantidad de direcciones IP
+    altura_ventana = min(400, 100 + len(direcciones_ip) * 25)
+    ventana_seleccion_ips.geometry(f"300x{altura_ventana}")  # Establecer el tamaño de la ventana
+    ventana_seleccion_ips.resizable(True, True)  # Permitir que la ventana se redimensione
+
+    # Etiqueta para instrucciones
+    etiqueta_instrucciones = ttk.Label(ventana_seleccion_ips, text="Selecciona las direcciones IP:")
+    etiqueta_instrucciones.pack(pady=10)
+
+    # Frame para contener los checkboxes con scrollbar
+    frame_con_scroll = ttk.Frame(ventana_seleccion_ips)
+    frame_con_scroll.pack(pady=5, fill=tk.BOTH, expand=True)
+
+    canvas = tk.Canvas(frame_con_scroll)
+    scrollbar = ttk.Scrollbar(frame_con_scroll, orient="vertical", command=canvas.yview)
+    scrollable_frame = ttk.Frame(canvas)
+
+    scrollable_frame.bind(
+        "<Configure>",
+        lambda e: canvas.configure(
+            scrollregion=canvas.bbox("all")
+        )
+    )
+
+    canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+    canvas.configure(yscrollcommand=scrollbar.set)
+
+    # Empaquetar canvas y scrollbar
+    canvas.pack(side="left", fill="both", expand=True)
+    scrollbar.pack(side="right", fill="y")
+
+    # Array para almacenar las variables de los checkboxes
+    check_vars = []
+
+    # Crear un checkbox por cada dirección IP
+    for ip in direcciones_ip:
+        var = tk.IntVar()
+        check_vars.append((ip, var))
+        check = ttk.Checkbutton(scrollable_frame, text=ip, variable=var)
+        check.pack(anchor='w')
+
+    # Botón para procesar las direcciones IP seleccionadas
+    boton_procesar_ips = ttk.Button(ventana_seleccion_ips, text="Procesar IPs",
+                                    command=lambda: procesar_seleccion_ips(check_vars))
+    boton_procesar_ips.pack(pady=10)
+
+
+def procesar_seleccion_ips(check_vars):
+    conjunto_ip = [ip for ip, var in check_vars if var.get() == 1]
+    if not conjunto_ip:
+        messagebox.showwarning("Advertencia", "No se ha seleccionado ninguna dirección IP.")
+    else:
+        messagebox.showinfo("IPs Seleccionadas", f"Direcciones IP seleccionadas: {', '.join(conjunto_ip)}")
+        print("Conjunto IP:", conjunto_ip)
+
+
+def procesar_direccion_ip():
+    ip = entrada_ip.get()
+    if ip:
+        messagebox.showinfo("Dirección IP", f"Dirección IP ingresada: {ip}")
+    else:
+        messagebox.showwarning("Advertencia", "Por favor, ingresa una dirección IP.")
+
+
+def procesar_direccion_ip():
+    ip = entrada_ip.get()
+    if ip:
+        messagebox.showinfo("Dirección IP", f"Dirección IP ingresada: {ip}")
+    else:
+        messagebox.showwarning("Advertencia", "Por favor, ingresa una dirección IP.")
+
 
 # Configuración de la ventana principal
 root = tk.Tk()
