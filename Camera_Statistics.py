@@ -334,10 +334,16 @@ def obtener_datos_camara():
     direccion_ip_global = None
 
     def procesar_direccion_ip(direccion_ip=None):
-        global direccion_ip_global, monitor_conexion, monitor_running
+        global direccion_ip_global, monitor_conexion, monitor_running, conjunto_ip, conjunto_estacion
 
         if not direccion_ip:
             direccion_ip = entrada_ip.get()
+            conjunto_ip = []
+            conjunto_estacion = []
+            if not conjunto_ip:
+                conjunto_ip.append(direccion_ip)
+            else:
+                conjunto_ip[0] = direccion_ip
 
         if direccion_ip:
             ping_exit_code = subprocess.call(['ping', '-n', '1', direccion_ip], stdout=subprocess.DEVNULL)
@@ -462,6 +468,7 @@ def obtener_datos_camara():
 
     def extraer_archivos(var_jpg, var_png, var_txt, inspeccion=None):
         global conjunto_ip, progess_bar, progress_label, ventana_archivos
+        estacion = None
 
         #Condicion para cuando se selecciona Todas las inspecciones
 
@@ -492,13 +499,17 @@ def obtener_datos_camara():
 
         for ip in conjunto_ip:
             i = 0
+            if conjunto_estacion != []:
+                estacion = conjunto_estacion[i]
+            else:
+                estacion = "Estacion"
 
             ruta_origen = f"\\\\{ip}\\mtxuser"
 
             # Crear nombre de la carpeta con "valor en columna"m "-", "dirección IP", "fecha"
             now = datetime.now()
             fecha = now.strftime("%Y-%m-%d_%H-%M-%S")
-            nombre_carpeta = f"{conjunto_estacion[i]}-{ip}-{fecha}"
+            nombre_carpeta = f"{estacion}-{ip}-{fecha}"
 
             # Ruta completa de la carpeta destino
             carpeta_destino = os.path.join(carpeta_destino_padre, nombre_carpeta)
@@ -587,12 +598,10 @@ def obtener_datos_camara():
         etiqueta_ip = ttk.Label(ventana_ip, text="Dirección IP:")
         etiqueta_ip.pack(pady=10)
 
+        global entrada_ip
         entrada_ip = ttk.Entry(ventana_ip)
         entrada_ip.pack()
 
-        def procesar_direccion_ip():
-            direccion_ip = entrada_ip.get()
-            procesar_direccion_ip(direccion_ip)
 
         boton_procesar = ttk.Button(ventana_ip, text="Procesar", command=procesar_direccion_ip)
         boton_procesar.pack(pady=10)
