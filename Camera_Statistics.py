@@ -412,7 +412,7 @@ def obtener_datos_camara():
             time.sleep(5)
 
     def abrir_ventana_seleccion_archivos():
-        global ventana_archivos
+        global ventana_archivos, progress_bar, progress_label
         ventana_archivos = tk.Toplevel(root)
         ventana_archivos.title("Seleccionar Archivos a Copiar")
         ventana_archivos.geometry("300x300")
@@ -437,6 +437,15 @@ def obtener_datos_camara():
         combo_inspeccion = ttk.Combobox(ventana_archivos, values=["Pass", "Fail", "Todas las inspecciones"])
         combo_inspeccion.pack(pady=10)
 
+        # Widget de progreso inicialmente oculto
+        progress_label = ttk.Label(ventana_archivos, text="Progreso de Extracción:")
+        progress_label.pack(pady=10)
+        progress_label.pack_forget()
+        progress_bar = ttk.Progressbar(ventana_archivos, orient='horizontal', length=300, mode='determinate')
+        progress_bar.pack(pady=10)
+        progress_bar.pack_forget()  # Ocultar inicialmente el widget de progress
+
+
         boton_extraer = ttk.Button(ventana_archivos, text="Extraer Archivos",
                                    command=lambda: extraer_archivos(var_jpg, var_png, var_txt, combo_inspeccion.get()))
         boton_extraer.pack(pady=10)
@@ -445,7 +454,7 @@ def obtener_datos_camara():
         boton_cerrar.pack(pady=10)
 
     def extraer_archivos(var_jpg, var_png, var_txt, inspeccion=None):
-        global conjunto_ip
+        global conjunto_ip, progess_bar, progress_label
 
         #Condicion para cuando se selecciona Todas las inspecciones
 
@@ -463,6 +472,10 @@ def obtener_datos_camara():
             extensiones_seleccionadas.append(".png")
         if var_txt.get():
             extensiones_seleccionadas.append(".txt")
+
+        progress_label.pack()
+        progress_bar['value'] = 0
+        progress_bar.pack()  # Mostrar el widget de progreso
 
         if not extensiones_seleccionadas:
             messagebox.showwarning("Advertencia", "No se ha seleccionado ningún tipo de archivo para copiar.")
@@ -483,6 +496,9 @@ def obtener_datos_camara():
             if not os.path.exists(carpeta_destino):
                 os.makedirs(carpeta_destino)
 
+            total_archivos = sum(len(files) for _, _, files in os.walk(ruta_origen))
+            progress_bar['maximum'] = total_archivos
+
             # Copiar archivos según la inspección seleccionada
             for raiz, dirs, archivos in os.walk(ruta_origen):
                 for archivo in archivos:
@@ -493,11 +509,14 @@ def obtener_datos_camara():
                             try:
                                 shutil.copy2(ruta_completa_origen, ruta_completa_destino)
                                 print(f"Archivo copiado: {ruta_completa_origen} -> {ruta_completa_destino}")
+                                progress_bar['value'] += 1
+                                ventana_archivos.update_idletasks()  # Actualizar la ventana para mostrar el progreso
+
                             except Exception as e:
                                 print(f"Error al copiar el archivo {ruta_completa_origen}: {str(e)}")
 
         messagebox.showinfo("Extracción Completa", "Archivos extraídos correctamente.")
-
+        progress_bar.pack_forget()  # Ocultar el widget de progreso al finalizar
     def abrir_ventana_credenciales(direccion_ip):
         ventana_credenciales = tk.Toplevel(root)
         ventana_credenciales.title(f"Ingresar Credenciales para {direccion_ip}")
