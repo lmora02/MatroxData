@@ -433,15 +433,25 @@ def obtener_datos_camara():
         check_txt = ttk.Checkbutton(ventana_archivos, text="TXT", variable=var_txt)
         check_txt.pack()
 
+        # ComboBox para seleccionar inspección
+        combo_inspeccion = ttk.Combobox(ventana_archivos, values=["Pass", "Fail", "Todas las inspecciones"])
+        combo_inspeccion.pack(pady=10)
+
         boton_extraer = ttk.Button(ventana_archivos, text="Extraer Archivos",
-                                   command=lambda: extraer_archivos(var_jpg, var_png, var_txt))
+                                   command=lambda: extraer_archivos(var_jpg, var_png, var_txt, combo_inspeccion.get()))
         boton_extraer.pack(pady=10)
 
         boton_cerrar = ttk.Button(ventana_archivos, text="Cerrar", command=ventana_archivos.destroy)
         boton_cerrar.pack(pady=10)
 
-    def extraer_archivos(var_jpg, var_png, var_txt):
+    def extraer_archivos(var_jpg, var_png, var_txt, inspeccion=None):
         global conjunto_ip
+
+        #Condicion para cuando se selecciona Todas las inspecciones
+
+        if inspeccion == "Todas las inspecciones":
+            inspeccion=None
+
         carpeta_destino_padre = filedialog.askdirectory(title="Selecciona la carpeta de destino")
         if not carpeta_destino_padre:
             return
@@ -473,33 +483,36 @@ def obtener_datos_camara():
             if not os.path.exists(carpeta_destino):
                 os.makedirs(carpeta_destino)
 
-            # Copiar archivos
+            # Copiar archivos según la inspección seleccionada
             for raiz, dirs, archivos in os.walk(ruta_origen):
                 for archivo in archivos:
                     if any(archivo.lower().endswith(ext) for ext in extensiones_seleccionadas):
-                        ruta_completa_origen = os.path.join(raiz, archivo)
-                        ruta_completa_destino = os.path.join(carpeta_destino, archivo)
-                        try:
-                            shutil.copy2(ruta_completa_origen, ruta_completa_destino)
-                            print(f"Archivo copiado: {ruta_completa_origen} -> {ruta_completa_destino}")
-                        except Exception as e:
-                            messagebox.showerror("Error", f"No se pudo copiar el archivo {archivo}: {str(e)}")
+                        if inspeccion is None or inspeccion.lower() in archivo.lower():
+                            ruta_completa_origen = os.path.join(raiz, archivo)
+                            ruta_completa_destino = os.path.join(carpeta_destino, archivo)
+                            try:
+                                shutil.copy2(ruta_completa_origen, ruta_completa_destino)
+                                print(f"Archivo copiado: {ruta_completa_origen} -> {ruta_completa_destino}")
+                            except Exception as e:
+                                print(f"Error al copiar el archivo {ruta_completa_origen}: {str(e)}")
 
-        messagebox.showinfo("Proceso Completo", "Se han copiado todos los archivos seleccionados.")
+        messagebox.showinfo("Extracción Completa", "Archivos extraídos correctamente.")
 
     def abrir_ventana_credenciales(direccion_ip):
         ventana_credenciales = tk.Toplevel(root)
-        ventana_credenciales.title("Ingresar Credenciales")
-        ventana_credenciales.geometry("300x200")
+        ventana_credenciales.title(f"Ingresar Credenciales para {direccion_ip}")
+        ventana_credenciales.geometry("300x150")
         ventana_credenciales.resizable(False, False)
 
         etiqueta_usuario = ttk.Label(ventana_credenciales, text="Usuario:")
         etiqueta_usuario.pack(pady=10)
+
         entrada_usuario = ttk.Entry(ventana_credenciales)
         entrada_usuario.pack()
 
         etiqueta_contrasena = ttk.Label(ventana_credenciales, text="Contraseña:")
         etiqueta_contrasena.pack(pady=10)
+
         entrada_contrasena = ttk.Entry(ventana_credenciales, show="*")
         entrada_contrasena.pack()
 
@@ -535,7 +548,6 @@ def obtener_datos_camara():
             abrir_ventana_credenciales(direccion_ip)
 
     def mostrar_ventana_ip():
-        global entrada_ip
         ventana_ip = tk.Toplevel(root)
         ventana_ip.title("Ingrese la Dirección IP")
         ventana_ip.geometry("300x150")
@@ -546,6 +558,10 @@ def obtener_datos_camara():
 
         entrada_ip = ttk.Entry(ventana_ip)
         entrada_ip.pack()
+
+        def procesar_direccion_ip():
+            direccion_ip = entrada_ip.get()
+            procesar_direccion_ip(direccion_ip)
 
         boton_procesar = ttk.Button(ventana_ip, text="Procesar", command=procesar_direccion_ip)
         boton_procesar.pack(pady=10)
@@ -578,6 +594,7 @@ def obtener_datos_camara():
         menu_archivo.add_command(label="Salir", command=root.quit)
 
     mostrar_menu()
+
 
 
 
