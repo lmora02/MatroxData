@@ -413,11 +413,13 @@ def obtener_datos_camara():
             time.sleep(5)
 
     def abrir_ventana_seleccion_archivos():
-        global ventana_archivos, progress_bar, progress_label
+        global ventana_archivos, progress_bar, progress_label, ventana_archivos
         ventana_archivos = tk.Toplevel(root)
         ventana_archivos.title("Seleccionar Archivos a Copiar")
-        ventana_archivos.geometry("300x300")
+        ventana_archivos.geometry("300x350")
         ventana_archivos.resizable(False, False)
+        # Configurar la ventana para que siempre se muestre al frente
+        ventana_archivos.attributes('-topmost', True)
 
         etiqueta_instrucciones = ttk.Label(ventana_archivos, text="Selecciona los archivos a copiar:")
         etiqueta_instrucciones.pack(pady=10)
@@ -446,7 +448,7 @@ def obtener_datos_camara():
         progress_label = ttk.Label(ventana_archivos, text="Progreso de Extracción:")
         progress_label.pack(pady=10)
         progress_label.pack_forget()
-        progress_bar = ttk.Progressbar(ventana_archivos, orient='horizontal', length=300, mode='determinate')
+        progress_bar = ttk.Progressbar(ventana_archivos, orient='horizontal', length=100, mode='determinate')
         progress_bar.pack(pady=10)
         progress_bar.pack_forget()  # Ocultar inicialmente el widget de progress
 
@@ -459,14 +461,16 @@ def obtener_datos_camara():
         boton_cerrar.pack(pady=10)
 
     def extraer_archivos(var_jpg, var_png, var_txt, inspeccion=None):
-        global conjunto_ip, progess_bar, progress_label
+        global conjunto_ip, progess_bar, progress_label, ventana_archivos
 
         #Condicion para cuando se selecciona Todas las inspecciones
 
         if inspeccion == "Todas las inspecciones":
             inspeccion = None
 
+        ventana_archivos.attributes('-topmost', False)
         carpeta_destino_padre = filedialog.askdirectory(title="Selecciona la carpeta de destino")
+        ventana_archivos.attributes('-topmost', True)
         if not carpeta_destino_padre:
             return
 
