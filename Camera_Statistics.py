@@ -5,6 +5,7 @@ import pandas as pd
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 from openpyxl.styles import PatternFill
+from datetime import datetime
 import shutil
 import subprocess
 from PIL import Image, ImageTk  # Importar Image y ImageTk de Pillow
@@ -441,8 +442,8 @@ def obtener_datos_camara():
 
     def extraer_archivos(var_jpg, var_png, var_txt):
         global conjunto_ip
-        carpeta_destino = filedialog.askdirectory(title="Selecciona la carpeta de destino")
-        if not carpeta_destino:
+        carpeta_destino_padre = filedialog.askdirectory(title="Selecciona la carpeta de destino")
+        if not carpeta_destino_padre:
             return
 
         extensiones_seleccionadas = []
@@ -457,27 +458,22 @@ def obtener_datos_camara():
             messagebox.showwarning("Advertencia", "No se ha seleccionado ningún tipo de archivo para copiar.")
             return
 
-        ventana_progreso = tk.Toplevel(root)
-        ventana_progreso.title("Progreso de Copia de Archivos")
-        ventana_progreso.geometry("300x100")
-        ventana_progreso.resizable(False, False)
-
-        etiqueta_progreso = ttk.Label(ventana_progreso, text="Copiando archivos...")
-        etiqueta_progreso.pack(pady=10)
-
-        barra_progreso = ttk.Progressbar(ventana_progreso, orient="horizontal", length=200, mode="determinate")
-        barra_progreso.pack(pady=10)
-
-        total_archivos = 0
         for ip in conjunto_ip:
             ruta_origen = f"\\\\{ip}\\mtxuser"
-            total_archivos += sum(1 for _, _, archivos in os.walk(ruta_origen) if any(
-                archivo.lower().endswith(ext) for ext in extensiones_seleccionadas for archivo in archivos))
 
-        barra_progreso["maximum"] = total_archivos
+            # Crear nombre de la carpeta con "valor en columna"m "-", "dirección IP", "fecha"
+            now = datetime.now()
+            fecha = now.strftime("%Y-%m-%d_%H-%M-%S")
+            nombre_carpeta = f"valor_en_columna-m-{ip}-{fecha}"
 
-        def copiar_archivos(ip, carpeta_destino, extensiones_seleccionadas):
-            ruta_origen = f"\\\\{ip}\\mtxuser"
+            # Ruta completa de la carpeta destino
+            carpeta_destino = os.path.join(carpeta_destino_padre, nombre_carpeta)
+
+            # Crear la carpeta si no existe
+            if not os.path.exists(carpeta_destino):
+                os.makedirs(carpeta_destino)
+
+            # Copiar archivos
             for raiz, dirs, archivos in os.walk(ruta_origen):
                 for archivo in archivos:
                     if any(archivo.lower().endswith(ext) for ext in extensiones_seleccionadas):
@@ -486,16 +482,10 @@ def obtener_datos_camara():
                         try:
                             shutil.copy2(ruta_completa_origen, ruta_completa_destino)
                             print(f"Archivo copiado: {ruta_completa_origen} -> {ruta_completa_destino}")
-                            barra_progreso["value"] += 1
-                            root.update_idletasks()
                         except Exception as e:
                             messagebox.showerror("Error", f"No se pudo copiar el archivo {archivo}: {str(e)}")
 
-        for ip in conjunto_ip:
-            copiar_archivos(ip, carpeta_destino, extensiones_seleccionadas)
-
         messagebox.showinfo("Proceso Completo", "Se han copiado todos los archivos seleccionados.")
-        ventana_progreso.destroy()
 
     def abrir_ventana_credenciales(direccion_ip):
         ventana_credenciales = tk.Toplevel(root)
