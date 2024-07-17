@@ -642,6 +642,7 @@ def obtener_datos_camara():
         ttk.Label(seleccionar_ips, text="Seleccione las IPs a procesar:").pack(pady=10)
 
         selected_ips = []
+        checkboxes = []
 
         def toggle_ip(ip):
             if ip in selected_ips:
@@ -653,7 +654,24 @@ def obtener_datos_camara():
         for ip in ips_disponibles:
             var_ip = tk.IntVar()
             checkbox = ttk.Checkbutton(seleccionar_ips, text=ip, variable=var_ip, command=lambda ip=ip: toggle_ip(ip))
+            checkbox.var = var_ip  # Guardar referencia a la variable IntVar
             checkbox.pack()
+            checkboxes.append(checkbox)
+
+        def seleccionar_todo():
+            for checkbox in checkboxes:
+                checkbox.var.set(1)
+                if checkbox.cget("text") not in selected_ips:
+                    selected_ips.append(checkbox.cget("text"))
+                boton_seleccionar.pack_forget()
+                boton_deseleccionar.pack(pady=10)
+        def deseleccionar_todo():
+            for checkbox in checkboxes:
+                checkbox.var.set(0)
+                if checkbox.cget("text") not in selected_ips:
+                    selected_ips.append(checkbox.cget("text"))
+                boton_deseleccionar.pack_forget()
+                boton_seleccionar.pack(pady=10)
 
         def procesar_seleccion():
             global conjunto_ip, conjunto_estacion
@@ -666,6 +684,15 @@ def obtener_datos_camara():
                 procesar_direccion_ip(ip)
 
         ttk.Button(seleccionar_ips, text="Aceptar", command=procesar_seleccion).pack(pady=10)
+
+        boton_deseleccionar = ttk.Button(seleccionar_ips, text="Deseleccionar Todo", command=deseleccionar_todo)
+        boton_deseleccionar.pack_forget()
+        boton_seleccionar = ttk.Button(seleccionar_ips, text="Seleccionar Todo", command=seleccionar_todo)
+        boton_seleccionar.pack(pady=10)
+
+
+
+
 
     def mostrar_menu():
         menu = tk.Menu(root)
