@@ -690,22 +690,27 @@ def obtener_datos_camara():
         boton_seleccionar = ttk.Button(seleccionar_ips, text="Seleccionar Todo", command=seleccionar_todo)
         boton_seleccionar.pack(pady=10)
 
+    def mostrar_ventana_archivo():
+        ventana_archivo = tk.Toplevel(root)
+        ventana_archivo.title("Archivo")
 
+        # Botón para "Ingresar IP"
+        btn_ingresar_ip = ttk.Button(ventana_archivo, text="Ingresar IP", command=mostrar_ventana_ip)
+        btn_ingresar_ip.pack(pady=10)
 
+        # Botón para "Extraer direcciones IP desde un excel"
+        btn_extraer_ips = ttk.Button(ventana_archivo, text="Extraer IP desde un excel",
+                                     command=extraer_ips_desde_excel)
+        btn_extraer_ips.pack(pady=10)
 
+        # Separador
+        separador = ttk.Separator(ventana_archivo, orient='horizontal')
+        separador.pack(fill='x', pady=10)
 
-    def mostrar_menu():
-        menu = tk.Menu(root)
-        root.config(menu=menu)
-
-        menu_archivo = tk.Menu(menu, tearoff=0)
-        menu.add_cascade(label="Archivo", menu=menu_archivo)
-        menu_archivo.add_command(label="Ingresar IP", command=mostrar_ventana_ip)
-        menu_archivo.add_command(label="Extraer direcciones IP desde un excel", command=extraer_ips_desde_excel)
-        menu_archivo.add_separator()
-        menu_archivo.add_command(label="Salir", command=root.quit)
-
-    mostrar_menu()
+        # Botón para "Salir"
+        btn_salir = ttk.Button(ventana_archivo, text="Salir", command=root.quit)
+        btn_salir.pack(pady=10)
+    mostrar_ventana_archivo()
 
 
 
