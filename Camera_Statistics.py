@@ -450,7 +450,7 @@ def obtener_datos_camara():
         #Condicion para cuando se selecciona Todas las inspecciones
 
         if inspeccion == "Todas las inspecciones":
-            inspeccion=None
+            inspeccion = None
 
         carpeta_destino_padre = filedialog.askdirectory(title="Selecciona la carpeta de destino")
         if not carpeta_destino_padre:
