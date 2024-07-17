@@ -395,6 +395,10 @@ def obtener_datos_camara():
 
             def on_closing():
                 cerrar_conexion()
+                direccion_ip = None
+                direccion_ip_global = None
+                directorio_actual = None
+                conjunto_ip = []
                 messagebox.showinfo("Conexion Perdida", f"Se ha perdido la conexión con {direccion_ip}.")
 
             boton_cerrar = ttk.Button(ventana_estado, text="Cerrar Conexión", command=cerrar_conexion)
@@ -618,13 +622,16 @@ def obtener_datos_camara():
         if 'Estacion' not in df.columns:
             messagebox.showerror("Error", "El archivo de Excel no contiene una columna 'Estacion'.")
             return
-        conjunto_estacion = df['Estacion'].dropna().tolist()
 
         if 'IP' not in df.columns:
             messagebox.showerror("Error", "El archivo de Excel no contiene una columna 'IP'.")
             return
 
+        estaciones_disponibles = df['Estacion'].dropna().tolist()
         ips_disponibles = df['IP'].dropna().tolist()
+
+        # Crear un diccionario de IP a estación
+        ip_estacion_dict = dict(zip(ips_disponibles, estaciones_disponibles))
 
         # Crear ventana para seleccionar IPs
         seleccionar_ips = tk.Toplevel(root)
@@ -649,10 +656,12 @@ def obtener_datos_camara():
             checkbox.pack()
 
         def procesar_seleccion():
-            global conjunto_ip
+            global conjunto_ip, conjunto_estacion
             conjunto_ip = selected_ips
+            conjunto_estacion = [ip_estacion_dict[ip] for ip in conjunto_ip]
             seleccionar_ips.destroy()
-            messagebox.showinfo("Selección Completa", f"IPs seleccionadas: {conjunto_ip}")
+            messagebox.showinfo("Selección Completa",
+                                f"IPs seleccionadas: {conjunto_ip}\nEstaciones seleccionadas: {conjunto_estacion}")
             for ip in conjunto_ip:
                 procesar_direccion_ip(ip)
 
