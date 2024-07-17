@@ -324,10 +324,11 @@ def generar_estadisticos_datos_especificos():
 
 # Función para abrir la ventana de obtener datos de la cámara
 def obtener_datos_camara():
-    global ventana_archivos, conjunto_ip, ventana_estado, monitor_conexion
+    global ventana_archivos, conjunto_ip, ventana_estado, monitor_conexion, conjunto_estacion
     ventana_estado = None
     ventana_archivos = None
     conjunto_ip = []
+    conjunto_estacion = []
     monitor_running = False
     monitor_conexion = None
     direccion_ip_global = None
@@ -433,6 +434,10 @@ def obtener_datos_camara():
         check_txt = ttk.Checkbutton(ventana_archivos, text="TXT", variable=var_txt)
         check_txt.pack()
 
+        #Instrucciones combo box
+        etiqueta_combo = ttk.Label(ventana_archivos, text="Selecciona el resultado de la inspección a extraer:")
+        etiqueta_combo.pack(pady=10)
+
         # ComboBox para seleccionar inspección
         combo_inspeccion = ttk.Combobox(ventana_archivos, values=["Pass", "Fail", "Todas las inspecciones"])
         combo_inspeccion.pack(pady=10)
@@ -482,12 +487,14 @@ def obtener_datos_camara():
             return
 
         for ip in conjunto_ip:
+            i = 0
+
             ruta_origen = f"\\\\{ip}\\mtxuser"
 
             # Crear nombre de la carpeta con "valor en columna"m "-", "dirección IP", "fecha"
             now = datetime.now()
             fecha = now.strftime("%Y-%m-%d_%H-%M-%S")
-            nombre_carpeta = f"valor_en_columna-m-{ip}-{fecha}"
+            nombre_carpeta = f"{conjunto_estacion[i]}-{ip}-{fecha}"
 
             # Ruta completa de la carpeta destino
             carpeta_destino = os.path.join(carpeta_destino_padre, nombre_carpeta)
@@ -514,6 +521,7 @@ def obtener_datos_camara():
 
                             except Exception as e:
                                 print(f"Error al copiar el archivo {ruta_completa_origen}: {str(e)}")
+            i = i+1
 
         messagebox.showinfo("Extracción Completa", "Archivos extraídos correctamente.")
         progress_bar.pack_forget()  # Ocultar el widget de progreso al finalizar
@@ -586,12 +594,19 @@ def obtener_datos_camara():
         boton_procesar.pack(pady=10)
 
     def extraer_ips_desde_excel():
-        global conjunto_ip
+        global conjunto_ip, conjunto_estacion
         archivo_excel = filedialog.askopenfilename(filetypes=[("Archivos de Excel", "*.xlsx;*.xls")])
         if not archivo_excel:
             return
 
+
         df = pd.read_excel(archivo_excel)
+
+        if 'Estacion' not in df.columns:
+            messagebox.showerror("Error", "El archivo de Excel no contiene una columna 'Estacion'.")
+            return
+        conjunto_estacion = df['Estacion'].dropna().tolist()
+
         if 'IP' not in df.columns:
             messagebox.showerror("Error", "El archivo de Excel no contiene una columna 'IP'.")
             return
