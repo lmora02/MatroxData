@@ -608,10 +608,10 @@ def obtener_datos_camara():
 
     def extraer_ips_desde_excel():
         global conjunto_ip, conjunto_estacion
+
         archivo_excel = filedialog.askopenfilename(filetypes=[("Archivos de Excel", "*.xlsx;*.xls")])
         if not archivo_excel:
             return
-
 
         df = pd.read_excel(archivo_excel)
 
@@ -624,10 +624,39 @@ def obtener_datos_camara():
             messagebox.showerror("Error", "El archivo de Excel no contiene una columna 'IP'.")
             return
 
-        conjunto_ip = df['IP'].dropna().tolist()
+        ips_disponibles = df['IP'].dropna().tolist()
 
-        for ip in conjunto_ip:
-            procesar_direccion_ip(ip)
+        # Crear ventana para seleccionar IPs
+        seleccionar_ips = tk.Toplevel(root)
+        seleccionar_ips.title("Seleccionar IPs")
+        seleccionar_ips.geometry("400x300")
+        seleccionar_ips.resizable(False, False)
+
+        ttk.Label(seleccionar_ips, text="Seleccione las IPs a procesar:").pack(pady=10)
+
+        selected_ips = []
+
+        def toggle_ip(ip):
+            if ip in selected_ips:
+                selected_ips.remove(ip)
+            else:
+                selected_ips.append(ip)
+
+        # Mostrar checkboxes para cada IP
+        for ip in ips_disponibles:
+            var_ip = tk.IntVar()
+            checkbox = ttk.Checkbutton(seleccionar_ips, text=ip, variable=var_ip, command=lambda ip=ip: toggle_ip(ip))
+            checkbox.pack()
+
+        def procesar_seleccion():
+            global conjunto_ip
+            conjunto_ip = selected_ips
+            seleccionar_ips.destroy()
+            messagebox.showinfo("Selección Completa", f"IPs seleccionadas: {conjunto_ip}")
+            for ip in conjunto_ip:
+                procesar_direccion_ip(ip)
+
+        ttk.Button(seleccionar_ips, text="Aceptar", command=procesar_seleccion).pack(pady=10)
 
     def mostrar_menu():
         menu = tk.Menu(root)
