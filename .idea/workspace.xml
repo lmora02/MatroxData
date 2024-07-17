@@ -108,4 +108,15 @@
     <MESSAGE value="Camera connection monitoring window is added." />
     <option name="LAST_COMMIT_MESSAGE" value="Camera connection monitoring window is added." />
   </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/Camera_Statistics.py</url>
+          <line>381</line>
+          <option name="timeStamp" value="8" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
+  </component>
 </project>

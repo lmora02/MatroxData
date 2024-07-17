@@ -295,20 +295,23 @@ def generar_estadisticos_datos_especificos():
  
 # Función para abrir la ventana de obtener datos de la cámara
 def obtener_datos_camara():
-    global monitor_running, ventana_archivos
+    global monitor_running, ventana_archivos, conjunto_ip, ventana_ip
     monitor_running = True
-    # Función para procesar la dirección IP ingresada y establecer la conexión SMB
-    def procesar_direccion_ip():
-        global direccion_ip_global, monitor_conexion, monitor_running
+    conjunto_ip = None  # Variable para almacenar las IPs seleccionadas desde el Excel
+    ventana_ip = None  # Inicializar ventana_ip como None
 
-        direccion_ip = entrada_ip.get()  # Obtener la dirección IP ingresada desde el campo de entrada
+    def procesar_direccion_ip(direccion_ip=None):
+        global direccion_ip_global, monitor_conexion, monitor_running, ventana_ip
+
+        if not direccion_ip:
+            direccion_ip = entrada_ip.get()  # Obtener la dirección IP ingresada desde el campo de entrada
+
         if direccion_ip:
             # Realizar prueba de ping para verificar la conexión
             ping_exit_code = subprocess.call(['ping', '-n', '1', direccion_ip], stdout=subprocess.DEVNULL)
             if ping_exit_code == 0:  # Ping exitoso
                 try:
                     # Intentar establecer conexión SMB a través de la ventana de comandos de Windows
-
                     comando = f"net use \\\\{direccion_ip}\\IPC$ /user:NAM\\mtxuser Matrox"
                     subprocess.run(comando, shell=True, check=True)
                     print(f"Conexión SMB establecida con {direccion_ip}")
@@ -316,8 +319,9 @@ def obtener_datos_camara():
                     # Mostrar mensaje de autenticación exitosa
                     messagebox.showinfo("Autenticación Exitosa", "Autenticación exitosa con la dirección IP especificada.")
 
-                    #Ocultar la ventana para ingresar la IP
-                    ventana_ip.destroy()
+                    # Ocultar la ventana para ingresar la IP si está definida
+                    if ventana_ip:
+                        ventana_ip.destroy()
                     # Abrir ventana para seleccionar archivos a copiar (JPG, PNG, TXT)
                     abrir_ventana_seleccion_archivos()
                     # Mostrar ventana con la dirección IP y estado de la conexión
@@ -340,15 +344,13 @@ def obtener_datos_camara():
             # Si no se ingresó ninguna dirección IP, muestra un mensaje de error
             messagebox.showerror("Error", "Debes ingresar una dirección IP válida.")
 
-        # Función para mostrar la ventana con la dirección IP y estado de conexión
     def mostrar_ventana_estado(direccion_ip):
         global direccion_ip_global, ventana_estado, estado_label
         direccion_ip_global = direccion_ip
 
-        # Función para cerrar la conexión y la ventana de estado
         def cerrar_conexion():
             global monitor_running
-            monitor_running= False
+            monitor_running = False
             comando_desconectar = f"net use \\\\{direccion_ip}\\IPC$ /delete"
             subprocess.run(comando_desconectar, shell=True, check=True)
             print(f"Conexión SMB cerrada con {direccion_ip}")
@@ -356,90 +358,77 @@ def obtener_datos_camara():
             if ventana_archivos:
                 ventana_archivos.destroy()
             messagebox.showinfo("Conexión Cerrada", f"Conexión cerrada con {direccion_ip}.")
+
         def on_closing():
             cerrar_conexion()
             messagebox.showinfo("Conexion Perdida", f"Se ha perdido la conexión con {direccion_ip}.")
 
-        # Función para actualizar el estado de conexión
         def actualizar_estado(estado):
             estado_label.config(text=f"Dirección IP: {direccion_ip}\nEstado: {estado}")
 
-        # Crear ventana para mostrar el estado de la conexión
         ventana_estado = tk.Toplevel(root)
         ventana_estado.title("Estado de Conexión")
-        ventana_estado.geometry("300x150")  # Establecer el tamaño de la ventana
-        ventana_estado.resizable(False, False)  # Evitar que la ventana se redimensione
+        ventana_estado.geometry("300x150")
+        ventana_estado.resizable(False, False)
 
-        # Mostrar la dirección IP y estado de la conexión
         estado_label = ttk.Label(ventana_estado, text=f"Dirección IP: {direccion_ip}\nEstado: Conectado")
         estado_label.pack(pady=20)
 
-        # Botón para cerrar la conexión
         boton_cerrar = ttk.Button(ventana_estado, text="Cerrar Conexión", command=cerrar_conexion)
         boton_cerrar.pack(pady=10)
 
-        #Configurar manejador de enventos para el cierre de la ventana
         ventana_estado.protocol("WM_DELETE_WINDOW", on_closing)
 
     def monitorizar_conexion(direccion_ip):
-            global direccion_ip_global, estado_label
+        global direccion_ip_global, estado_label
 
-            while monitor_running:
-                # Realizar ping para verificar la conexión
-                ping_exit_code = subprocess.call(['ping', '-n', '1', direccion_ip], stdout=subprocess.DEVNULL)
-                if ping_exit_code != 0:  # Si el ping falla, actualizar estado a desconectado
-                    if direccion_ip == direccion_ip_global:  # Solo actualizar si es la misma dirección IP
-                        estado_label.config(text=f"Dirección IP: {direccion_ip}\nEstado: Desconectado")
-                        messagebox.showwarning("Conexión Perdida", f"Se ha perdido la conexión con {direccion_ip}.")
-                        ventana_estado.destroy()
-                        if ventana_archivos:
-                            ventana_archivos.destroy()
-                        break  # Salir del bucle de monitoreo
+        while monitor_running:
+            ping_exit_code = subprocess.call(['ping', '-n', '1', direccion_ip], stdout=subprocess.DEVNULL)
+            if ping_exit_code != 0:
+                if direccion_ip == direccion_ip_global:
+                    estado_label.config(text=f"Dirección IP: {direccion_ip}\nEstado: Desconectado")
+                    messagebox.showwarning("Conexión Perdida", f"Se ha perdido la conexión con {direccion_ip}.")
+                    ventana_estado.destroy()
+                    if ventana_archivos:
+                        ventana_archivos.destroy()
+                    break
 
-                time.sleep(5)  # Esperar 5 segundos antes de verificar de nuevo
+            time.sleep(5)
 
-    # Función para abrir la ventana de selección de archivos a copiar (JPG, PNG, TXT)
     def abrir_ventana_seleccion_archivos():
         global ventana_archivos
         ventana_archivos = tk.Toplevel(root)
         ventana_archivos.title("Seleccionar Archivos a Copiar")
-        ventana_archivos.geometry("300x300")  # Establecer el tamaño de la ventana
-        ventana_archivos.resizable(False, False)  # Evitar que la ventana se redimensione
+        ventana_archivos.geometry("300x300")
+        ventana_archivos.resizable(False, False)
 
-        # Etiqueta para instrucciones
         etiqueta_instrucciones = ttk.Label(ventana_archivos, text="Selecciona los archivos a copiar:")
         etiqueta_instrucciones.pack(pady=10)
 
-        # Checkbox para seleccionar archivos JPG
         var_jpg = tk.IntVar()
         check_jpg = ttk.Checkbutton(ventana_archivos, text="JPG", variable=var_jpg)
         check_jpg.pack()
 
-        # Checkbox para seleccionar archivos PNG
         var_png = tk.IntVar()
         check_png = ttk.Checkbutton(ventana_archivos, text="PNG", variable=var_png)
         check_png.pack()
 
-        # Checkbox para seleccionar archivos TXT
         var_txt = tk.IntVar()
         check_txt = ttk.Checkbutton(ventana_archivos, text="TXT", variable=var_txt)
         check_txt.pack()
 
-        # Botón para extraer archivos
-        boton_extraer = ttk.Button(ventana_archivos, text="Extraer Archivos", command=lambda: extraer_archivos(var_jpg, var_png, var_txt))
+        boton_extraer = ttk.Button(ventana_archivos, text="Extraer Archivos",
+                                   command=lambda: extraer_archivos(var_jpg, var_png, var_txt))
         boton_extraer.pack(pady=10)
-        # Botón para cerrar la ventana de selección de archivos
+
         boton_cerrar = ttk.Button(ventana_archivos, text="Cerrar", command=ventana_archivos.destroy)
         boton_cerrar.pack(pady=10)
 
-        # Función para extraer archivos seleccionados
     def extraer_archivos(var_jpg, var_png, var_txt):
-         # Abrir el explorador de archivos para seleccionar la carpeta de destino
         carpeta_destino = filedialog.askdirectory(title="Selecciona la carpeta de destino")
         if not carpeta_destino:
-            return  # Si no se seleccionó ninguna carpeta, salir de la función
+            return
 
-            # Lista de extensiones seleccionadas
         extensiones_seleccionadas = []
         if var_jpg.get():
             extensiones_seleccionadas.append(".jpg")
@@ -452,10 +441,6 @@ def obtener_datos_camara():
             messagebox.showwarning("Advertencia", "No se ha seleccionado ningún tipo de archivo para copiar.")
             return
 
-        # Ruta de origen en la cámara
-        ruta_origen = f"\\\\{direccion_ip_global}\\mtxuser"
-
-        # Crear una ventana de progreso
         ventana_progreso = tk.Toplevel(root)
         ventana_progreso.title("Progreso de Copia de Archivos")
         ventana_progreso.geometry("300x100")
@@ -467,189 +452,142 @@ def obtener_datos_camara():
         barra_progreso = ttk.Progressbar(ventana_progreso, orient="horizontal", length=200, mode="determinate")
         barra_progreso.pack(pady=10)
 
-        # Contar el número total de archivos a copiar
-        total_archivos = sum(1 for _, _, archivos in os.walk(ruta_origen) if any(
-            archivo.lower().endswith(ext) for ext in extensiones_seleccionadas for archivo in archivos))
+        total_archivos = 0
+        if conjunto_ip:
+            for ip in conjunto_ip:
+                ruta_origen = f"\\\\{ip}\\mtxuser"
+                total_archivos += sum(1 for _, _, archivos in os.walk(ruta_origen) if any(
+                    archivo.lower().endswith(ext) for ext in extensiones_seleccionadas for archivo in archivos))
+        else:
+            ruta_origen = f"\\\\{direccion_ip_global}\\mtxuser"
+            total_archivos = sum(1 for _, _, archivos in os.walk(ruta_origen) if any(
+                archivo.lower().endswith(ext) for ext in extensiones_seleccionadas for archivo in archivos))
+
         barra_progreso["maximum"] = total_archivos
 
-    # Copiar los archivos seleccionados a la carpeta de destino
-        for raiz, dirs, archivos in os.walk(ruta_origen):
-            for archivo in archivos:
-                if any(archivo.lower().endswith(ext) for ext in extensiones_seleccionadas):
-                    ruta_completa_origen = os.path.join(raiz, archivo)
-                    ruta_completa_destino = os.path.join(carpeta_destino, archivo)
-                    try:
-                        shutil.copy2(ruta_completa_origen, ruta_completa_destino)
-                        print(f"Archivo copiado: {ruta_completa_origen} -> {ruta_completa_destino}")
-                    except Exception as e:
-                        print(f"No se pudo copiar el archivo {ruta_completa_origen}: {str(e)}")
+        def copiar_archivos(ip, carpeta_destino, extensiones_seleccionadas):
+            ruta_origen = f"\\\\{ip}\\mtxuser"
+            for raiz, dirs, archivos in os.walk(ruta_origen):
+                for archivo in archivos:
+                    if any(archivo.lower().endswith(ext) for ext in extensiones_seleccionadas):
+                        ruta_completa_origen = os.path.join(raiz, archivo)
+                        ruta_completa_destino = os.path.join(carpeta_destino, archivo)
+                        try:
+                            shutil.copy2(ruta_completa_origen, ruta_completa_destino)
+                            print(f"Archivo copiado: {ruta_completa_origen} -> {ruta_completa_destino}")
+                            barra_progreso["value"] += 1
+                            root.update_idletasks()
+                        except Exception as e:
+                            messagebox.showerror("Error", f"No se pudo copiar el archivo {archivo}: {str(e)}")
 
-        messagebox.showinfo("Operación Completada", "Archivos copiados exitosamente.")
+        if conjunto_ip:
+            for ip in conjunto_ip:
+                copiar_archivos(ip, carpeta_destino, extensiones_seleccionadas)
+        else:
+            copiar_archivos(direccion_ip_global, carpeta_destino, extensiones_seleccionadas)
 
-    # Función para abrir la ventana de ingreso de nuevas credenciales
+        messagebox.showinfo("Proceso Completo", "Se han copiado todos los archivos seleccionados.")
+        ventana_progreso.destroy()
+
     def abrir_ventana_credenciales(direccion_ip):
         global usuario_global, contrasena_global
         ventana_credenciales = tk.Toplevel(root)
         ventana_credenciales.title("Ingresar Credenciales")
-        ventana_credenciales.geometry("300x250")  # Establecer el tamaño de la ventana
-        ventana_credenciales.resizable(False, False)  # Evitar que la ventana se redimensione
+        ventana_credenciales.geometry("300x200")
+        ventana_credenciales.resizable(False, False)
 
-        # Etiqueta para instrucciones
-        etiqueta_instrucciones = ttk.Label(ventana_credenciales, text="Las credenciales no son válidas.\nIngresa nuevas credenciales:")
-        etiqueta_instrucciones.pack(pady=10)
+        etiqueta_usuario = ttk.Label(ventana_credenciales, text="Usuario:")
+        etiqueta_usuario.pack(pady=10)
+        entrada_usuario = ttk.Entry(ventana_credenciales)
+        entrada_usuario.pack()
 
-        # Campo de texto para usuario
-        entrada_usuario = ttk.Entry(ventana_credenciales, width=30)
-        entrada_usuario.pack(pady=5)
+        etiqueta_contrasena = ttk.Label(ventana_credenciales, text="Contraseña:")
+        etiqueta_contrasena.pack(pady=10)
+        entrada_contrasena = ttk.Entry(ventana_credenciales, show="*")
+        entrada_contrasena.pack()
 
-        # Campo de texto para contraseña
-        entrada_contrasena = ttk.Entry(ventana_credenciales, width=30, show="*")
-        entrada_contrasena.pack(pady=5)
+        def guardar_credenciales():
+            global usuario_global, contrasena_global
+            usuario_global = entrada_usuario.get()
+            contrasena_global = entrada_contrasena.get()
+            ventana_credenciales.destroy()
+            autenticar_conexion(direccion_ip, usuario_global, contrasena_global)
 
-        # Botón para procesar las nuevas credenciales
-        boton_procesar_credenciales = ttk.Button(ventana_credenciales, text="Procesar", command=lambda: procesar_credenciales(direccion_ip, entrada_usuario.get(), entrada_contrasena.get()))
-        boton_procesar_credenciales.pack(pady=10)
+        boton_guardar = ttk.Button(ventana_credenciales, text="Guardar", command=guardar_credenciales)
+        boton_guardar.pack(pady=20)
 
-        # Función para procesar las nuevas credenciales ingresadas
-        def procesar_credenciales(direccion_ip, usuario, contrasena):
-            if direccion_ip and usuario and contrasena:
-                try:
-                    # Intentar establecer conexión SMB con las nuevas credenciales
-                    comando = f"net use \\\\{direccion_ip}\\IPC$ /user:{usuario} {contrasena}"
-                    subprocess.run(comando, shell=True, check=True)
-                    print(f"Conexión SMB establecida con nuevas credenciales: {usuario}")
+    def autenticar_conexion(direccion_ip, usuario, contrasena):
+        global direccion_ip_global, monitor_conexion, monitor_running
+        try:
+            comando = f"net use \\\\{direccion_ip}\\IPC$ /user:{usuario} {contrasena}"
+            subprocess.run(comando, shell=True, check=True)
+            print(f"Conexión SMB establecida con {direccion_ip}")
 
-                    # Cerrar la ventana de ingreso de credenciales
-                    ventana_credenciales.destroy()
+            # Mostrar mensaje de autenticación exitosa
+            messagebox.showinfo("Autenticación Exitosa", "Autenticación exitosa con la dirección IP especificada.")
 
-                    # Mostrar mensaje de autenticación exitosa con nuevas credenciales
-                    messagebox.showinfo("Autenticación Exitosa", "Autenticación exitosa con las nuevas credenciales.")
+            # Abrir ventana para seleccionar archivos a copiar (JPG, PNG, TXT)
+            abrir_ventana_seleccion_archivos()
 
-                    # Abrir ventana para seleccionar archivos a copiar (JPG, PNG, TXT)
-                    abrir_ventana_seleccion_archivos()
+            # Mostrar ventana con la dirección IP y estado de la conexión
+            mostrar_ventana_estado(direccion_ip)
 
-                except subprocess.CalledProcessError as e:
-                    # Mostrar mensaje de error si no se pudo establecer la conexión con las nuevas credenciales
-                    messagebox.showerror("Error", f"No se pudo establecer la conexión SMB con las nuevas credenciales: {str(e)}")
+            # Iniciar monitoreo de conexión
+            monitor_running = True
+            monitor_conexion = threading.Thread(target=monitorizar_conexion, args=(direccion_ip,))
+            monitor_conexion.start()
 
-            else:
-                # Mostrar mensaje de error si no se ingresaron todas las credenciales
-                messagebox.showerror("Error", "Debes ingresar un usuario y contraseña válidos.")
+        except subprocess.CalledProcessError as e:
+            messagebox.showerror("Error", f"No se pudo establecer la conexión SMB con {direccion_ip}: {str(e)}")
+            abrir_ventana_credenciales(direccion_ip)
 
-    # Crear una nueva ventana para ingresar la dirección IP
-    ventana_ip = tk.Toplevel(root)
-    ventana_ip.title("Ingresar Dirección IP de la Cámara")
-    ventana_ip.geometry("300x150")  # Establecer el tamaño de la ventana
-    ventana_ip.resizable(True, True)  # Evitar que la ventana se redimensione
+    def mostrar_ventana_ip():
+        global entrada_ip, ventana_ip
+        ventana_ip = tk.Toplevel(root)
+        ventana_ip.title("Ingrese la Dirección IP")
+        ventana_ip.geometry("300x150")
+        ventana_ip.resizable(False, False)
 
-    # Etiqueta para instrucciones
-    etiqueta_instrucciones = ttk.Label(ventana_ip, text="Ingresa la dirección IP de la cámara:")
-    etiqueta_instrucciones.pack(pady=10)
+        etiqueta_ip = ttk.Label(ventana_ip, text="Dirección IP:")
+        etiqueta_ip.pack(pady=10)
 
-    # Campo de texto para ingresar la dirección IP
-    entrada_ip = ttk.Entry(ventana_ip, width=30)
-    entrada_ip.pack(pady=5)
+        entrada_ip = ttk.Entry(ventana_ip)
+        entrada_ip.pack()
 
-    # Botón para procesar la dirección IP ingresada
-    boton_procesar_ip = ttk.Button(ventana_ip, text="Procesar", command=procesar_direccion_ip)
-    boton_procesar_ip.pack(pady=10)
+        boton_procesar = ttk.Button(ventana_ip, text="Procesar", command=procesar_direccion_ip)
+        boton_procesar.pack(pady=10)
 
-    # Botón para cargar direcciones IP desde archivo Excel
-    boton_cargar_excel = ttk.Button(ventana_ip, text="Cargar IPs desde Excel", command=cargar_ips_desde_excel)
-    boton_cargar_excel.pack(pady=10)
+    def extraer_ips_desde_excel():
+        global conjunto_ip
+        archivo_excel = filedialog.askopenfilename(filetypes=[("Archivos de Excel", "*.xlsx;*.xls")])
+        if not archivo_excel:
+            return
 
+        df = pd.read_excel(archivo_excel)
+        if 'IP' not in df.columns:
+            messagebox.showerror("Error", "El archivo de Excel no contiene una columna 'IP'.")
+            return
 
-def cargar_ips_desde_excel():
-    # Abrir diálogo para seleccionar el archivo Excel
-    archivo_excel = filedialog.askopenfilename(filetypes=[("Archivos de Excel", "*.xlsx *.xls")])
-    if not archivo_excel:
-        return  # Si no se seleccionó ningún archivo, salir de la función
+        conjunto_ip = df['IP'].dropna().tolist()
 
-    # Leer el archivo Excel
-    try:
-        df = pd.read_excel(archivo_excel, usecols=[0, 1],
-                           skiprows=1)  # Leer las columnas A y B, y omitir la primera fila
-        df.dropna(subset=[df.columns[1]], inplace=True)  # Eliminar filas donde la columna B esté vacía
-        direcciones_ip = df.apply(lambda row: f"{row[1]} - Estación {row[0]}", axis=1).tolist()
-        mostrar_ventana_seleccion_ips(direcciones_ip)
-    except Exception as e:
-        messagebox.showerror("Error", f"No se pudo leer el archivo: {str(e)}")
+        for ip in conjunto_ip:
+            procesar_direccion_ip(ip)
 
+    def mostrar_menu():
+        menu = tk.Menu(root)
+        root.config(menu=menu)
 
-def mostrar_ventana_seleccion_ips(direcciones_ip):
-    ventana_seleccion_ips = tk.Toplevel(root)
-    ventana_seleccion_ips.title("Seleccionar Direcciones IP")
+        menu_archivo = tk.Menu(menu, tearoff=0)
+        menu.add_cascade(label="Archivo", menu=menu_archivo)
+        menu_archivo.add_command(label="Ingresar IP", command=mostrar_ventana_ip)
+        menu_archivo.add_command(label="Extraer direcciones IP desde un excel", command=extraer_ips_desde_excel)
+        menu_archivo.add_separator()
+        menu_archivo.add_command(label="Salir", command=root.quit)
 
-    # Ajustar la altura de la ventana según la cantidad de direcciones IP
-    altura_ventana = min(400, 100 + len(direcciones_ip) * 25)
-    ventana_seleccion_ips.geometry(f"300x{altura_ventana}")  # Establecer el tamaño de la ventana
-    ventana_seleccion_ips.resizable(True, True)  # Permitir que la ventana se redimensione
-
-    # Etiqueta para instrucciones
-    etiqueta_instrucciones = ttk.Label(ventana_seleccion_ips, text="Selecciona las direcciones IP:")
-    etiqueta_instrucciones.pack(pady=10)
-
-    # Frame para contener los checkboxes con scrollbar
-    frame_con_scroll = ttk.Frame(ventana_seleccion_ips)
-    frame_con_scroll.pack(pady=5, fill=tk.BOTH, expand=True)
-
-    canvas = tk.Canvas(frame_con_scroll)
-    scrollbar = ttk.Scrollbar(frame_con_scroll, orient="vertical", command=canvas.yview)
-    scrollable_frame = ttk.Frame(canvas)
-
-    scrollable_frame.bind(
-        "<Configure>",
-        lambda e: canvas.configure(
-            scrollregion=canvas.bbox("all")
-        )
-    )
-
-    canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
-    canvas.configure(yscrollcommand=scrollbar.set)
-
-    # Empaquetar canvas y scrollbar
-    canvas.pack(side="left", fill="both", expand=True)
-    scrollbar.pack(side="right", fill="y")
-
-    # Array para almacenar las variables de los checkboxes
-    check_vars = []
-
-    # Crear un checkbox por cada dirección IP
-    for ip in direcciones_ip:
-        var = tk.IntVar()
-        check_vars.append((ip, var))
-        check = ttk.Checkbutton(scrollable_frame, text=ip, variable=var)
-        check.pack(anchor='w')
-
-    # Botón para procesar las direcciones IP seleccionadas
-    boton_procesar_ips = ttk.Button(ventana_seleccion_ips, text="Procesar IPs",
-                                    command=lambda: procesar_seleccion_ips(check_vars))
-    boton_procesar_ips.pack(pady=10)
+    mostrar_menu()
 
 
-def procesar_seleccion_ips(check_vars):
-    conjunto_ip = [ip for ip, var in check_vars if var.get() == 1]
-    if not conjunto_ip:
-        messagebox.showwarning("Advertencia", "No se ha seleccionado ninguna dirección IP.")
-    else:
-        messagebox.showinfo("IPs Seleccionadas", f"Direcciones IP seleccionadas: {', '.join(conjunto_ip)}")
-        print("Conjunto IP:", conjunto_ip)
 
-
-def procesar_direccion_ip():
-    ip = entrada_ip.get()
-    if ip:
-        messagebox.showinfo("Dirección IP", f"Dirección IP ingresada: {ip}")
-    else:
-        messagebox.showwarning("Advertencia", "Por favor, ingresa una dirección IP.")
-
-
-def procesar_direccion_ip():
-    ip = entrada_ip.get()
-    if ip:
-        messagebox.showinfo("Dirección IP", f"Dirección IP ingresada: {ip}")
-    else:
-        messagebox.showwarning("Advertencia", "Por favor, ingresa una dirección IP.")
 
 
 # Configuración de la ventana principal
