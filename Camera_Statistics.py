@@ -292,95 +292,112 @@ def generar_estadisticos_datos_especificos():
     # Botón para procesar los parámetros
     boton_procesar = ttk.Button(ventana_estadisticos_especificos, text="Procesar", command=procesar_parametros, style="TButton")
     boton_procesar.pack()
- 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # Función para abrir la ventana de obtener datos de la cámara
 def obtener_datos_camara():
-    global monitor_running, ventana_archivos, conjunto_ip, ventana_ip
-    monitor_running = True
-    conjunto_ip = None  # Variable para almacenar las IPs seleccionadas desde el Excel
-    ventana_ip = None  # Inicializar ventana_ip como None
+    global ventana_archivos, conjunto_ip, ventana_estado, monitor_conexion
+    ventana_estado = None
+    ventana_archivos = None
+    conjunto_ip = []
+    monitor_running = False
+    monitor_conexion = None
+    direccion_ip_global = None
 
     def procesar_direccion_ip(direccion_ip=None):
-        global direccion_ip_global, monitor_conexion, monitor_running, ventana_ip
+        global direccion_ip_global, monitor_conexion, monitor_running
 
         if not direccion_ip:
-            direccion_ip = entrada_ip.get()  # Obtener la dirección IP ingresada desde el campo de entrada
+            direccion_ip = entrada_ip.get()
 
         if direccion_ip:
-            # Realizar prueba de ping para verificar la conexión
             ping_exit_code = subprocess.call(['ping', '-n', '1', direccion_ip], stdout=subprocess.DEVNULL)
-            if ping_exit_code == 0:  # Ping exitoso
+            if ping_exit_code == 0:
                 try:
-                    # Intentar establecer conexión SMB a través de la ventana de comandos de Windows
                     comando = f"net use \\\\{direccion_ip}\\IPC$ /user:NAM\\mtxuser Matrox"
                     subprocess.run(comando, shell=True, check=True)
                     print(f"Conexión SMB establecida con {direccion_ip}")
 
-                    # Mostrar mensaje de autenticación exitosa
-                    messagebox.showinfo("Autenticación Exitosa", "Autenticación exitosa con la dirección IP especificada.")
+                    if ventana_archivos is None:
+                        abrir_ventana_seleccion_archivos()
 
-                    # Ocultar la ventana para ingresar la IP si está definida
-                    if ventana_ip:
-                        ventana_ip.destroy()
-                    # Abrir ventana para seleccionar archivos a copiar (JPG, PNG, TXT)
-                    abrir_ventana_seleccion_archivos()
-                    # Mostrar ventana con la dirección IP y estado de la conexión
-                    mostrar_ventana_estado(direccion_ip)
+                    if ventana_estado is None:
+                        mostrar_ventana_estado(direccion_ip)
 
-                    # Iniciar monitoreo de conexión
                     monitor_running = True
-                    monitor_conexion = threading.Thread(target=monitorizar_conexion, args=(direccion_ip,))
-                    monitor_conexion.start()
+                    if monitor_conexion is None or not monitor_conexion.is_alive():
+                        monitor_conexion = threading.Thread(target=monitorizar_conexion, args=(direccion_ip,))
+                        monitor_conexion.start()
 
                 except subprocess.CalledProcessError as e:
-                    # Mostrar mensaje de error si no se pudo establecer la conexión SMB
                     messagebox.showerror("Error", f"No se pudo establecer la conexión SMB con {direccion_ip}: {str(e)}")
-                    # Abrir ventana para ingresar nuevas credenciales
                     abrir_ventana_credenciales(direccion_ip)
             else:
-                # Si no se puede hacer ping, mostrar mensaje de error
                 messagebox.showerror("Error", f"No se pudo hacer ping a la dirección IP {direccion_ip}.")
         else:
-            # Si no se ingresó ninguna dirección IP, muestra un mensaje de error
             messagebox.showerror("Error", "Debes ingresar una dirección IP válida.")
 
     def mostrar_ventana_estado(direccion_ip):
-        global direccion_ip_global, ventana_estado, estado_label
-        direccion_ip_global = direccion_ip
+        global ventana_estado, direccion_ip_global
 
-        def cerrar_conexion():
-            global monitor_running
-            monitor_running = False
-            comando_desconectar = f"net use \\\\{direccion_ip}\\IPC$ /delete"
-            subprocess.run(comando_desconectar, shell=True, check=True)
-            print(f"Conexión SMB cerrada con {direccion_ip}")
-            ventana_estado.destroy()
-            if ventana_archivos:
-                ventana_archivos.destroy()
-            messagebox.showinfo("Conexión Cerrada", f"Conexión cerrada con {direccion_ip}.")
+        if ventana_estado is None:
+            ventana_estado = tk.Toplevel(root)
+            ventana_estado.title("Estado de Conexión")
+            ventana_estado.geometry("300x150")
+            ventana_estado.resizable(False, False)
 
-        def on_closing():
-            cerrar_conexion()
-            messagebox.showinfo("Conexion Perdida", f"Se ha perdido la conexión con {direccion_ip}.")
+            estado_label = ttk.Label(ventana_estado, text=f"Dirección IP: {direccion_ip}\nEstado: Conectado")
+            estado_label.pack(pady=20)
 
-        def actualizar_estado(estado):
-            estado_label.config(text=f"Dirección IP: {direccion_ip}\nEstado: {estado}")
+            def cerrar_conexion():
+                global monitor_running, ventana_estado
+                monitor_running = False
+                comando_desconectar = f"net use \\\\{direccion_ip}\\IPC$ /delete"
+                subprocess.run(comando_desconectar, shell=True, check=True)
+                print(f"Conexión SMB cerrada con {direccion_ip}")
+                ventana_estado.destroy()
+                messagebox.showinfo("Conexión Cerrada", f"Conexión cerrada con {direccion_ip}.")
 
-        ventana_estado = tk.Toplevel(root)
-        ventana_estado.title("Estado de Conexión")
-        ventana_estado.geometry("300x150")
-        ventana_estado.resizable(False, False)
+            def on_closing():
+                cerrar_conexion()
+                messagebox.showinfo("Conexion Perdida", f"Se ha perdido la conexión con {direccion_ip}.")
 
-        estado_label = ttk.Label(ventana_estado, text=f"Dirección IP: {direccion_ip}\nEstado: Conectado")
-        estado_label.pack(pady=20)
+            boton_cerrar = ttk.Button(ventana_estado, text="Cerrar Conexión", command=cerrar_conexion)
+            boton_cerrar.pack(pady=10)
 
-        boton_cerrar = ttk.Button(ventana_estado, text="Cerrar Conexión", command=cerrar_conexion)
-        boton_cerrar.pack(pady=10)
-
-        ventana_estado.protocol("WM_DELETE_WINDOW", on_closing)
+            ventana_estado.protocol("WM_DELETE_WINDOW", on_closing)
+        else:
+            estado_label.config(text=f"Dirección IP: {direccion_ip}\nEstado: Conectado")
 
     def monitorizar_conexion(direccion_ip):
-        global direccion_ip_global, estado_label
+        global direccion_ip_global, ventana_estado
 
         while monitor_running:
             ping_exit_code = subprocess.call(['ping', '-n', '1', direccion_ip], stdout=subprocess.DEVNULL)
@@ -389,8 +406,6 @@ def obtener_datos_camara():
                     estado_label.config(text=f"Dirección IP: {direccion_ip}\nEstado: Desconectado")
                     messagebox.showwarning("Conexión Perdida", f"Se ha perdido la conexión con {direccion_ip}.")
                     ventana_estado.destroy()
-                    if ventana_archivos:
-                        ventana_archivos.destroy()
                     break
 
             time.sleep(5)
@@ -425,6 +440,7 @@ def obtener_datos_camara():
         boton_cerrar.pack(pady=10)
 
     def extraer_archivos(var_jpg, var_png, var_txt):
+        global conjunto_ip
         carpeta_destino = filedialog.askdirectory(title="Selecciona la carpeta de destino")
         if not carpeta_destino:
             return
@@ -453,14 +469,9 @@ def obtener_datos_camara():
         barra_progreso.pack(pady=10)
 
         total_archivos = 0
-        if conjunto_ip:
-            for ip in conjunto_ip:
-                ruta_origen = f"\\\\{ip}\\mtxuser"
-                total_archivos += sum(1 for _, _, archivos in os.walk(ruta_origen) if any(
-                    archivo.lower().endswith(ext) for ext in extensiones_seleccionadas for archivo in archivos))
-        else:
-            ruta_origen = f"\\\\{direccion_ip_global}\\mtxuser"
-            total_archivos = sum(1 for _, _, archivos in os.walk(ruta_origen) if any(
+        for ip in conjunto_ip:
+            ruta_origen = f"\\\\{ip}\\mtxuser"
+            total_archivos += sum(1 for _, _, archivos in os.walk(ruta_origen) if any(
                 archivo.lower().endswith(ext) for ext in extensiones_seleccionadas for archivo in archivos))
 
         barra_progreso["maximum"] = total_archivos
@@ -480,17 +491,13 @@ def obtener_datos_camara():
                         except Exception as e:
                             messagebox.showerror("Error", f"No se pudo copiar el archivo {archivo}: {str(e)}")
 
-        if conjunto_ip:
-            for ip in conjunto_ip:
-                copiar_archivos(ip, carpeta_destino, extensiones_seleccionadas)
-        else:
-            copiar_archivos(direccion_ip_global, carpeta_destino, extensiones_seleccionadas)
+        for ip in conjunto_ip:
+            copiar_archivos(ip, carpeta_destino, extensiones_seleccionadas)
 
         messagebox.showinfo("Proceso Completo", "Se han copiado todos los archivos seleccionados.")
         ventana_progreso.destroy()
 
     def abrir_ventana_credenciales(direccion_ip):
-        global usuario_global, contrasena_global
         ventana_credenciales = tk.Toplevel(root)
         ventana_credenciales.title("Ingresar Credenciales")
         ventana_credenciales.geometry("300x200")
@@ -517,32 +524,28 @@ def obtener_datos_camara():
         boton_guardar.pack(pady=20)
 
     def autenticar_conexion(direccion_ip, usuario, contrasena):
-        global direccion_ip_global, monitor_conexion, monitor_running
         try:
             comando = f"net use \\\\{direccion_ip}\\IPC$ /user:{usuario} {contrasena}"
             subprocess.run(comando, shell=True, check=True)
             print(f"Conexión SMB establecida con {direccion_ip}")
 
-            # Mostrar mensaje de autenticación exitosa
-            messagebox.showinfo("Autenticación Exitosa", "Autenticación exitosa con la dirección IP especificada.")
+            if ventana_archivos is None:
+                abrir_ventana_seleccion_archivos()
 
-            # Abrir ventana para seleccionar archivos a copiar (JPG, PNG, TXT)
-            abrir_ventana_seleccion_archivos()
+            if ventana_estado is None:
+                mostrar_ventana_estado(direccion_ip)
 
-            # Mostrar ventana con la dirección IP y estado de la conexión
-            mostrar_ventana_estado(direccion_ip)
-
-            # Iniciar monitoreo de conexión
             monitor_running = True
-            monitor_conexion = threading.Thread(target=monitorizar_conexion, args=(direccion_ip,))
-            monitor_conexion.start()
+            if monitor_conexion is None or not monitor_conexion.is_alive():
+                monitor_conexion = threading.Thread(target=monitorizar_conexion, args=(direccion_ip,))
+                monitor_conexion.start()
 
         except subprocess.CalledProcessError as e:
             messagebox.showerror("Error", f"No se pudo establecer la conexión SMB con {direccion_ip}: {str(e)}")
             abrir_ventana_credenciales(direccion_ip)
 
     def mostrar_ventana_ip():
-        global entrada_ip, ventana_ip
+        global entrada_ip
         ventana_ip = tk.Toplevel(root)
         ventana_ip.title("Ingrese la Dirección IP")
         ventana_ip.geometry("300x150")
@@ -585,6 +588,37 @@ def obtener_datos_camara():
         menu_archivo.add_command(label="Salir", command=root.quit)
 
     mostrar_menu()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
