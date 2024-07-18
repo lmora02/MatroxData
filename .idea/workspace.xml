@@ -4,8 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="c4c7b122-1021-4d20-ba87-b5c8101ed7af" name="Changes" comment="IP for one connection its ok">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    <list default="true" id="c4c7b122-1021-4d20-ba87-b5c8101ed7af" name="Changes" comment="Ip selected UI">
       <change beforePath="$PROJECT_DIR$/Camera_Statistics.py" beforeDir="false" afterPath="$PROJECT_DIR$/Camera_Statistics.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -176,7 +175,15 @@
       <option name="project" value="LOCAL" />
       <updated>1721334467455</updated>
     </task>
-    <option name="localTasksCounter" value="13" />
+    <task id="LOCAL-00013" summary="Ip selected UI">
+      <option name="closed" value="true" />
+      <created>1721340670772</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1721340670772</updated>
+    </task>
+    <option name="localTasksCounter" value="14" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -214,6 +221,7 @@
     <MESSAGE value="Archive window corrected and ip input OK" />
     <MESSAGE value="UI for IP OK" />
     <MESSAGE value="IP for one connection its ok" />
-    <option name="LAST_COMMIT_MESSAGE" value="IP for one connection its ok" />
+    <MESSAGE value="Ip selected UI" />
+    <option name="LAST_COMMIT_MESSAGE" value="Ip selected UI" />
   </component>
 </project>

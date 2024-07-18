@@ -390,7 +390,7 @@ def obtener_datos_camara():
         if ventana_estado is None:
             ventana_estado = tk.Toplevel(root)
             ventana_estado.title("Estado de Conexión")
-            ventana_estado.geometry("300x150")
+            ventana_estado.geometry("300x150+500+200")
             ventana_estado.resizable(False, False)
 
             estado_label = ttk.Label(ventana_estado, text=f"Dirección IP: {direccion_ip}\nEstado: Conectado")
@@ -436,9 +436,10 @@ def obtener_datos_camara():
 
     def abrir_ventana_seleccion_archivos():
         global ventana_archivos, progress_bar, progress_label, ventana_archivo, ventana_estado
+        ventana_archivo.withdraw()
         ventana_archivos = tk.Toplevel(root)
         ventana_archivos.title("Seleccionar Archivos a Copiar")
-        ventana_archivos.geometry("300x350")
+        ventana_archivos.geometry("300x350+200+200")
         ventana_archivos.resizable(False, False)
         # Configurar la ventana para que siempre se muestre al frente
         ventana_archivos.attributes('-topmost', True)
