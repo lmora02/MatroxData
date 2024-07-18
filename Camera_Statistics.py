@@ -756,7 +756,7 @@ def actualizar_texto_elementos():
 # Configuración de la ventana principal
 root = tk.Tk()
 root.title("Inspection Tools Statistics V1.01")
-root.geometry("450x500")  # Establecer el tamaño inicial de la ventana
+root.geometry("450x550")  # Establecer el tamaño inicial de la ventana
 root.resizable(False, False)  # Evitar que la ventana se redimensione
 
 # Estilo de Material Design
@@ -771,7 +771,7 @@ style.configure("BotonesVentanaPrincipal.TButton", font=('Roboto', 7, 'bold'))
 
 # Etiqueta para mostrar las instrucciones
 instrucciones_label = ttk.Label(root, text="———————————| INSTRUCCIONES |—————————————\n\n1. Seleccionar la carpeta para seleccionar los archivos a clasificar.\n2. Dependiendo de los datos de interes, dar click en el boton de 'Generar\n    Estadistico' o si se necesita algún otro dato dar click en el botón\n    'Estadisticos Datos Especificos'.")
-instrucciones_label.place(x=10, y=380)
+instrucciones_label.place(x=10, y=420)
 
 # Combinar la ruta del directorio actual con el nombre de la imagen
 ruta_imagen_matrox = os.path.join(directorio_actual, "matrox.png")
@@ -810,18 +810,16 @@ abrir_estadisticos_button.pack(pady=5, anchor="w", padx=115)
 # Etiqueta para mostrar las encabezado de los botones
 encabezadoSPECIAL_label = ttk.Label(root, text="—————————| FUNCIONES ESPECIALES |————————————")
 encabezadoSPECIAL_label.pack(pady=10, anchor="w", padx=15)
-
-# Botón para generar estadísticos de datos específicos
-estadisticos_especificos_button = ttk.Button(root, text="Estadísticos Datos Específicos", command=generar_estadisticos_datos_especificos, style="TButton")
-estadisticos_especificos_button.pack(pady=5, anchor="w", padx=115)
-
 # Etiqueta para mostrar mensajes
 mensaje_label = ttk.Label(root, text="", style="TLabel")
 mensaje_label.pack()
-
+mensaje_label.forget()
 # Etiqueta para mostrar la ruta del archivo de estadísticos
 etiqueta_ruta = ttk.Label(root, text="", style="TLabel")
 etiqueta_ruta.place(x=1000, y=1000)
+# Botón para generar estadísticos de datos específicos
+estadisticos_especificos_button = ttk.Button(root, text="Estadísticos Datos Específicos", command=generar_estadisticos_datos_especificos, style="TButton")
+estadisticos_especificos_button.pack(pady=5, anchor="w", padx=115)
 
 # Botón para obtener datos de la cámara con estilo personalizado
 boton_obtener_datos = ttk.Button(root, text="Obtener datos de la cámara", command=obtener_datos_camara, style="TButton")
@@ -829,7 +827,7 @@ boton_obtener_datos.pack(pady=5, anchor="w", padx=115)
 
 # Botón para cambiar el idioma de la aplicación
 boton_cambiar_idioma = ttk.Button(root, text="Inglés", command=cambiar_idioma, style="TButton", width=10)
-boton_cambiar_idioma.pack(pady=25, anchor="se", padx=10)
+boton_cambiar_idioma.pack(pady=20, anchor="se", padx=10)
 
 # Mostrar la ventana principal
 root.mainloop()
