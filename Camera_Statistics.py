@@ -397,13 +397,15 @@ def obtener_datos_camara():
             estado_label.pack(pady=20)
 
             def cerrar_conexion():
-                global monitor_running, ventana_estado
+                global monitor_running, ventana_estado, ventana_archivos
                 monitor_running = False
                 #comando_desconectar = f"net use \\\\{direccion_ip}\\IPC$ /delete"
                 #subprocess.run(comando_desconectar, shell=True, check=True)
                 print(f"Conexión SMB cerrada con {direccion_ip}")
                 ventana_estado.destroy()
+                ventana_estado = None
                 ventana_archivos.destroy()
+                ventana_archivos = None
                 messagebox.showinfo("Conexión Cerrada", f"Conexión cerrada con {direccion_ip}.")
                 ventana_archivo.deiconify()
 
@@ -433,7 +435,7 @@ def obtener_datos_camara():
             time.sleep(5)
 
     def abrir_ventana_seleccion_archivos():
-        global ventana_archivos, progress_bar, progress_label, ventana_archivo
+        global ventana_archivos, progress_bar, progress_label, ventana_archivo, ventana_estado
         ventana_archivos = tk.Toplevel(root)
         ventana_archivos.title("Seleccionar Archivos a Copiar")
         ventana_archivos.geometry("300x350")
@@ -474,9 +476,12 @@ def obtener_datos_camara():
 
         #Cerrar ventana de seleccion de archivos
         def cerrar_seleccion():
+            global ventana_estado, ventana_archivos
             ventana_estado.destroy()
+            ventana_estado = None
             ventana_archivos.destroy()
             ventana_archivo.deiconify()
+            ventana_archivos = None
 
         boton_extraer = ttk.Button(ventana_archivos, text="Extraer Archivos",
                                    command=lambda: extraer_archivos(var_jpg, var_png, var_txt, combo_inspeccion.get()))
