@@ -331,7 +331,7 @@ def generar_estadisticos_datos_especificos():
 
 
 def obtener_datos_camara():
-    global ventana_archivos, conjunto_ip, ventana_estado, monitor_conexion, conjunto_estacion
+    global ventana_archivos, conjunto_ip, ventana_estado, monitor_conexion, conjunto_estacion, ventana_ip, ventana_archivo
     ventana_estado = None
     ventana_archivos = None
     conjunto_ip = []
@@ -353,12 +353,17 @@ def obtener_datos_camara():
                 conjunto_ip[0] = direccion_ip
 
         if direccion_ip:
-            ping_exit_code = subprocess.call(['ping', '-n', '1', direccion_ip], stdout=subprocess.DEVNULL)
-            if ping_exit_code == 0:
+            #ping_exit_code = subprocess.call(['ping', '-n', '1', direccion_ip], stdout=subprocess.DEVNULL)
+            #if ping_exit_code == 0:
+            if 1 == 1:
                 try:
-                    comando = f"net use \\\\{direccion_ip}\\IPC$ /user:NAM\\mtxuser Matrox"
-                    subprocess.run(comando, shell=True, check=True)
+                    #comando = f"net use \\\\{direccion_ip}\\IPC$ /user:NAM\\mtxuser Matrox"
+                    #subprocess.run(comando, shell=True, check=True)
                     print(f"Conexión SMB establecida con {direccion_ip}")
+
+                    #Oculta la ventana para ingresar la ip
+                    ventana_ip.destroy()
+                    ventana_archivo.withdraw()
 
                     if ventana_archivos is None:
                         abrir_ventana_seleccion_archivos()
@@ -367,9 +372,9 @@ def obtener_datos_camara():
                         mostrar_ventana_estado(direccion_ip)
 
                     monitor_running = True
-                    if monitor_conexion is None or not monitor_conexion.is_alive():
-                        monitor_conexion = threading.Thread(target=monitorizar_conexion, args=(direccion_ip,))
-                        monitor_conexion.start()
+                    #if monitor_conexion is None or not monitor_conexion.is_alive():
+                        #monitor_conexion = threading.Thread(target=monitorizar_conexion, args=(direccion_ip,))
+                        #monitor_conexion.start()
 
                 except subprocess.CalledProcessError as e:
                     messagebox.showerror("Error", f"No se pudo establecer la conexión SMB con {direccion_ip}: {str(e)}")
@@ -380,7 +385,7 @@ def obtener_datos_camara():
             messagebox.showerror("Error", "Debes ingresar una dirección IP válida.")
 
     def mostrar_ventana_estado(direccion_ip):
-        global ventana_estado, direccion_ip_global
+        global ventana_estado, direccion_ip_global, ventana_archivos
 
         if ventana_estado is None:
             ventana_estado = tk.Toplevel(root)
@@ -394,18 +399,16 @@ def obtener_datos_camara():
             def cerrar_conexion():
                 global monitor_running, ventana_estado
                 monitor_running = False
-                comando_desconectar = f"net use \\\\{direccion_ip}\\IPC$ /delete"
-                subprocess.run(comando_desconectar, shell=True, check=True)
+                #comando_desconectar = f"net use \\\\{direccion_ip}\\IPC$ /delete"
+                #subprocess.run(comando_desconectar, shell=True, check=True)
                 print(f"Conexión SMB cerrada con {direccion_ip}")
                 ventana_estado.destroy()
+                ventana_archivos.destroy()
                 messagebox.showinfo("Conexión Cerrada", f"Conexión cerrada con {direccion_ip}.")
+                ventana_archivo.deiconify()
 
             def on_closing():
                 cerrar_conexion()
-                direccion_ip = None
-                direccion_ip_global = None
-                directorio_actual = None
-                conjunto_ip = []
                 messagebox.showinfo("Conexion Perdida", f"Se ha perdido la conexión con {direccion_ip}.")
 
             boton_cerrar = ttk.Button(ventana_estado, text="Cerrar Conexión", command=cerrar_conexion)
@@ -430,7 +433,7 @@ def obtener_datos_camara():
             time.sleep(5)
 
     def abrir_ventana_seleccion_archivos():
-        global ventana_archivos, progress_bar, progress_label, ventana_archivos
+        global ventana_archivos, progress_bar, progress_label, ventana_archivo
         ventana_archivos = tk.Toplevel(root)
         ventana_archivos.title("Seleccionar Archivos a Copiar")
         ventana_archivos.geometry("300x350")
@@ -469,13 +472,19 @@ def obtener_datos_camara():
         progress_bar.pack(pady=10)
         progress_bar.pack_forget()  # Ocultar inicialmente el widget de progress
 
+        #Cerrar ventana de seleccion de archivos
+        def cerrar_seleccion():
+            ventana_estado.destroy()
+            ventana_archivos.destroy()
+            ventana_archivo.deiconify()
+
         boton_extraer = ttk.Button(ventana_archivos, text="Extraer Archivos",
                                    command=lambda: extraer_archivos(var_jpg, var_png, var_txt, combo_inspeccion.get()))
         boton_extraer.pack(pady=10)
 
-        boton_cerrar = ttk.Button(ventana_archivos, text="Cerrar", command=ventana_archivos.destroy)
+        boton_cerrar = ttk.Button(ventana_archivos, text="Cerrar", command=cerrar_seleccion)
         boton_cerrar.pack(pady=10)
-
+        ventana_archivos.protocol("WM_DELETE_WINDOW", cerrar_seleccion)
     def extraer_archivos(var_jpg, var_png, var_txt, inspeccion=None):
         global conjunto_ip, progess_bar, progress_label, ventana_archivos
         estacion = None
@@ -601,6 +610,8 @@ def obtener_datos_camara():
             abrir_ventana_credenciales(direccion_ip)
 
     def mostrar_ventana_ip():
+        global ventana_ip, direccion_ip
+        direccion_ip = None
         ventana_ip = tk.Toplevel(root)
         ventana_ip.title("Ingrese la Dirección IP")
         ventana_ip.geometry("300x150+275+280")
@@ -699,7 +710,7 @@ def obtener_datos_camara():
         boton_seleccionar.pack(pady=10)
 
     def mostrar_ventana_archivo():
-        global imagen_matroxs, imagen_vistas
+        global imagen_matroxs, imagen_vistas, ventana_archivo
         #Ocultar ventana principal
         root.withdraw()
 

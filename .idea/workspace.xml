@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="c4c7b122-1021-4d20-ba87-b5c8101ed7af" name="Changes" comment="Main UI Corrected without translate">
+    <list default="true" id="c4c7b122-1021-4d20-ba87-b5c8101ed7af" name="Changes" comment="Archive window corrected and ip input OK">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Camera_Statistics.py" beforeDir="false" afterPath="$PROJECT_DIR$/Camera_Statistics.py" afterDir="false" />
     </list>
@@ -142,7 +142,15 @@
       <option name="project" value="LOCAL" />
       <updated>1721323638997</updated>
     </task>
-    <option name="localTasksCounter" value="10" />
+    <task id="LOCAL-00010" summary="Archive window corrected and ip input OK">
+      <option name="closed" value="true" />
+      <created>1721327208269</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1721327208269</updated>
+    </task>
+    <option name="localTasksCounter" value="11" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -177,6 +185,7 @@
     <MESSAGE value="Selected IPs and name stations" />
     <MESSAGE value="Full selected IPs and name stations" />
     <MESSAGE value="Main UI Corrected without translate" />
-    <option name="LAST_COMMIT_MESSAGE" value="Main UI Corrected without translate" />
+    <MESSAGE value="Archive window corrected and ip input OK" />
+    <option name="LAST_COMMIT_MESSAGE" value="Archive window corrected and ip input OK" />
   </component>
 </project>
