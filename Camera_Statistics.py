@@ -347,6 +347,8 @@ def obtener_datos_camara():
             direccion_ip = entrada_ip.get()
             conjunto_ip = []
             conjunto_estacion = []
+            ventana_ip.destroy()
+            ventana_archivo.withdraw()
             if not conjunto_ip:
                 conjunto_ip.append(direccion_ip)
             else:
@@ -362,8 +364,6 @@ def obtener_datos_camara():
                     print(f"Conexión SMB establecida con {direccion_ip}")
 
                     #Oculta la ventana para ingresar la ip
-                    ventana_ip.destroy()
-                    ventana_archivo.withdraw()
 
                     if ventana_archivos is None:
                         abrir_ventana_seleccion_archivos()
@@ -659,8 +659,9 @@ def obtener_datos_camara():
         # Crear ventana para seleccionar IPs
         seleccionar_ips = tk.Toplevel(root)
         seleccionar_ips.title("Seleccionar IPs")
-        seleccionar_ips.geometry("400x300")
+        seleccionar_ips.geometry("450x300+200+200")
         seleccionar_ips.resizable(False, False)
+        seleccionar_ips.grab_set()
 
         ttk.Label(seleccionar_ips, text="Seleccione las IPs a procesar:").pack(pady=10)
 
@@ -672,28 +673,49 @@ def obtener_datos_camara():
                 selected_ips.remove(ip)
             else:
                 selected_ips.append(ip)
+        # Crear un frame para contener el canvas y las scrollbars
+        frame_canvas = ttk.Frame(seleccionar_ips)
+        frame_canvas.pack(fill=tk.BOTH, expand=1)
+
+        # Crear un canvas
+        canvas = tk.Canvas(frame_canvas, width=100, height=100)
+        canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=1)
+
+        # Añadir scrollbar vertical al canvas
+        scrollbar_vertical = ttk.Scrollbar(frame_canvas, orient=tk.VERTICAL, command=canvas.yview)
+        scrollbar_vertical.pack(side=tk.RIGHT, fill=tk.Y)
+
+        # Configurar el canvas para usar la scrollbar
+        canvas.configure(yscrollcommand=scrollbar_vertical.set)
+        canvas.bind('<Configure>', lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
+
+        # Crear un frame dentro del canvas
+        frame_checkboxes = ttk.Frame(canvas)
+        canvas.create_window((0, 0), window=frame_checkboxes, anchor="nw")
 
         # Mostrar checkboxes para cada IP
         for ip in ips_disponibles:
+            estacion = ip_estacion_dict.get(ip, "Desconocida")
             var_ip = tk.IntVar()
-            checkbox = ttk.Checkbutton(seleccionar_ips, text=ip, variable=var_ip, command=lambda ip=ip: toggle_ip(ip))
+            checkbox_text=f"Estacion:{estacion} - IP:{ip}"
+            checkbox = ttk.Checkbutton(frame_checkboxes, text=checkbox_text, variable=var_ip, command=lambda ip=ip: toggle_ip(ip))
             checkbox.var = var_ip  # Guardar referencia a la variable IntVar
-            checkbox.pack()
+            checkbox.pack(anchor='w')
             checkboxes.append(checkbox)
 
         def seleccionar_todo():
             for checkbox in checkboxes:
                 checkbox.var.set(1)
-                if checkbox.cget("text") not in selected_ips:
-                    selected_ips.append(checkbox.cget("text"))
+                if checkbox.cget(ip) not in selected_ips:
+                    selected_ips.append(checkbox.cget(ip))
                 boton_seleccionar.pack_forget()
                 boton_deseleccionar.pack(pady=10)
 
         def deseleccionar_todo():
             for checkbox in checkboxes:
                 checkbox.var.set(0)
-                if checkbox.cget("text") not in selected_ips:
-                    selected_ips.append(checkbox.cget("text"))
+                if checkbox.cget(ip) not in selected_ips:
+                    selected_ips.append(checkbox.cget(ip))
                 boton_deseleccionar.pack_forget()
                 boton_seleccionar.pack(pady=10)
 
