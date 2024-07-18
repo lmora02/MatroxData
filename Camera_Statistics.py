@@ -823,6 +823,10 @@ mensaje_label.pack()
 etiqueta_ruta = ttk.Label(root, text="", style="TLabel")
 etiqueta_ruta.place(x=1000, y=1000)
 
+# Botón para obtener datos de la cámara con estilo personalizado
+boton_obtener_datos = ttk.Button(root, text="Obtener datos de la cámara", command=obtener_datos_camara, style="TButton")
+boton_obtener_datos.pack(pady=5, anchor="w", padx=115)
+
 # Botón para cambiar el idioma de la aplicación
 boton_cambiar_idioma = ttk.Button(root, text="Inglés", command=cambiar_idioma, style="TButton", width=10)
 boton_cambiar_idioma.pack(pady=25, anchor="se", padx=10)
