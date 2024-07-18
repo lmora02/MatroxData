@@ -62,6 +62,7 @@ import time
 import pandas as pd
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
+from tkinter import PhotoImage, Toplevel, Label
 from openpyxl.styles import PatternFill
 from datetime import datetime
 import shutil
@@ -602,7 +603,7 @@ def obtener_datos_camara():
     def mostrar_ventana_ip():
         ventana_ip = tk.Toplevel(root)
         ventana_ip.title("Ingrese la Dirección IP")
-        ventana_ip.geometry("300x150")
+        ventana_ip.geometry("300x150+275+280")
         ventana_ip.resizable(False, False)
 
         etiqueta_ip = ttk.Label(ventana_ip, text="Dirección IP:")
@@ -614,6 +615,7 @@ def obtener_datos_camara():
 
         boton_procesar = ttk.Button(ventana_ip, text="Procesar", command=procesar_direccion_ip)
         boton_procesar.pack(pady=10)
+        ventana_ip.grab_set()
 
     def extraer_ips_desde_excel():
         global conjunto_ip, conjunto_estacion
@@ -697,8 +699,38 @@ def obtener_datos_camara():
         boton_seleccionar.pack(pady=10)
 
     def mostrar_ventana_archivo():
+        global imagen_matroxs, imagen_vistas
+        #Ocultar ventana principal
+        root.withdraw()
+
+        #Crear ventana para seleccionar ingreso de la IP
         ventana_archivo = tk.Toplevel(root)
-        ventana_archivo.title("Archivo")
+        ventana_archivo.title("Inspection Tools Statistics V1.01")
+        ventana_archivo.geometry("450x300+200+200")
+        ventana_archivo.resizable(False, False)
+        # Combinar la ruta del directorio actual con el nombre de la imagen
+        directorio_actual = os.getcwd()  # Obtener directorio actual
+        ruta_imagen_matrox = os.path.join(directorio_actual, "matrox.png")
+        # Cargar imagen Matrox en la ventana principal
+        imagen_matroxs = PhotoImage(file=ruta_imagen_matrox)
+
+        # Widget para mostrar la imagen Matrox en la ventana principal
+        matrox_labels = Label(ventana_archivo, image=imagen_matroxs)
+        matrox_labels.place(x=390, y=5)
+
+        # Combinar la ruta del directorio actual con el nombre de la imagen
+        ruta_imagen_vista = os.path.join(directorio_actual, "vista.png")
+        # Cargar imagen Vista en la ventana principal
+        imagen_vistas = PhotoImage(file=ruta_imagen_vista)
+
+        # Widget para mostrar la imagen Vista en la ventana principal
+        imagen_labels = Label(ventana_archivo, image=imagen_vistas)
+        imagen_labels.pack(side="top", padx=20, pady=15, anchor="nw")
+
+        #Regresar al main
+        def back_to_main():
+            ventana_archivo.withdraw()
+            root.deiconify()
 
         # Botón para "Ingresar IP"
         btn_ingresar_ip = ttk.Button(ventana_archivo, text="Ingresar IP", command=mostrar_ventana_ip)
@@ -714,8 +746,10 @@ def obtener_datos_camara():
         separador.pack(fill='x', pady=10)
 
         # Botón para "Salir"
-        btn_salir = ttk.Button(ventana_archivo, text="Salir", command=root.quit)
+        btn_salir = ttk.Button(ventana_archivo, text="Atras", command=back_to_main)
         btn_salir.pack(pady=10)
+
+        ventana_archivo.protocol("WM_DELETE_WINDOW", back_to_main)
 
     mostrar_ventana_archivo()
 
@@ -756,7 +790,7 @@ def actualizar_texto_elementos():
 # Configuración de la ventana principal
 root = tk.Tk()
 root.title("Inspection Tools Statistics V1.01")
-root.geometry("450x550")  # Establecer el tamaño inicial de la ventana
+root.geometry("450x550+200+200")  # Establecer el tamaño inicial de la ventana
 root.resizable(False, False)  # Evitar que la ventana se redimensione
 
 # Estilo de Material Design
@@ -773,6 +807,7 @@ style.configure("BotonesVentanaPrincipal.TButton", font=('Roboto', 7, 'bold'))
 instrucciones_label = ttk.Label(root, text="———————————| INSTRUCCIONES |—————————————\n\n1. Seleccionar la carpeta para seleccionar los archivos a clasificar.\n2. Dependiendo de los datos de interes, dar click en el boton de 'Generar\n    Estadistico' o si se necesita algún otro dato dar click en el botón\n    'Estadisticos Datos Especificos'.")
 instrucciones_label.place(x=10, y=420)
 
+global imagen_matrox, imagen_vista
 # Combinar la ruta del directorio actual con el nombre de la imagen
 ruta_imagen_matrox = os.path.join(directorio_actual, "matrox.png")
 # Cargar imagen Matrox en la ventana principal
