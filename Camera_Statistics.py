@@ -434,7 +434,6 @@ def obtener_datos_camara():
         progress_bar.pack(pady=10)
         progress_bar.pack_forget()  # Ocultar inicialmente el widget de progress
 
-
         boton_extraer = ttk.Button(ventana_archivos, text="Extraer Archivos",
                                    command=lambda: extraer_archivos(var_jpg, var_png, var_txt, combo_inspeccion.get()))
         boton_extraer.pack(pady=10)
@@ -577,7 +576,6 @@ def obtener_datos_camara():
         global entrada_ip
         entrada_ip = ttk.Entry(ventana_ip)
         entrada_ip.pack()
-
 
         boton_procesar = ttk.Button(ventana_ip, text="Procesar", command=procesar_direccion_ip)
         boton_procesar.pack(pady=10)
