@@ -294,34 +294,6 @@ def generar_estadisticos_datos_especificos():
     boton_procesar = ttk.Button(ventana_estadisticos_especificos, text="Procesar", command=procesar_parametros, style="TButton")
     boton_procesar.pack()
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # Función para abrir la ventana de obtener datos de la cámara
 def obtener_datos_camara():
     global ventana_archivos, conjunto_ip, ventana_estado, monitor_conexion, conjunto_estacion
@@ -711,42 +683,6 @@ def obtener_datos_camara():
         btn_salir = ttk.Button(ventana_archivo, text="Salir", command=root.quit)
         btn_salir.pack(pady=10)
     mostrar_ventana_archivo()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 # Configuración de la ventana principal
 root = tk.Tk()
