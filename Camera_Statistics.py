@@ -27,7 +27,7 @@ Functions:
 ----------
 - clasificar_archivos(carpeta_principal)
     Classifies files into subfolders based on their extensions.
-    
+
     Parameters:
     - carpeta_principal (str): The main directory to classify files.
 
@@ -36,7 +36,7 @@ Functions:
 
 - buscar_subcarpetas_txt(carpeta)
     Searches for all subfolders named 'TXT' within the specified directory.
-    
+
     Parameters:
     - carpeta (str): The directory to search for 'TXT' subfolders.
 
@@ -57,10 +57,13 @@ Functions:
 
 """
 import os
+import threading
+import time
 import pandas as pd
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 from openpyxl.styles import PatternFill
+from datetime import datetime
 import shutil
 import subprocess
 from PIL import Image, ImageTk
@@ -76,14 +79,19 @@ idioma = "ES"
 # Función para clasificar archivos en subcarpetas según su extensión
 def clasificar_archivos(carpeta_principal):
     carpetas = ['png', 'jpg', 'txt']
+    # Recorrer la estructura de directorios de la carpeta principal
     for carpeta, _, archivos in os.walk(carpeta_principal):
         for archivo in archivos:
             archivo_path = os.path.join(carpeta, archivo)
+            # Obtener la extensión del archivo
             extension = archivo.split('.')[-1].lower()
+            # Verificar si la extensión está en la lista de extensiones a clasificar
             if extension in carpetas:
+                # Crear la subcarpeta si no existe
                 subcarpeta = os.path.join(carpeta, extension.lower())
                 if not os.path.exists(subcarpeta):
                     os.makedirs(subcarpeta)
+                # Mover el archivo a la subcarpeta correspondiente
                 shutil.move(archivo_path, os.path.join(subcarpeta, archivo))
 
 # Función para seleccionar una carpeta principal y clasificar sus archivos
@@ -105,10 +113,13 @@ def buscar_subcarpetas_txt(carpeta):
 # Función para generar estadísticas de archivos de texto en la carpeta seleccionada
 def generar_estadisticos():
     global carpeta_seleccionada, ruta_archivo_estadisticos
+    # Seleccionar una carpeta
     carpeta_seleccionada = filedialog.askdirectory(title="Seleccionar Carpeta")
     if carpeta_seleccionada:
+        # Buscar todas las subcarpetas llamadas 'TXT'
         subcarpetas_txt = buscar_subcarpetas_txt(carpeta_seleccionada)
         if subcarpetas_txt:
+            # Mostrar mensaje informativo y procesar archivos .txt
             messagebox.showinfo("Generar Estadísticos", f"Se generarán estadísticos de la carpeta: {carpeta_seleccionada}")
             valores = []
             for subcarpeta_txt in subcarpetas_txt:
@@ -119,10 +130,10 @@ def generar_estadisticos():
                             ruta_archivo = os.path.join(root, archivo)
                             with open(ruta_archivo, 'r') as file:
                                 contenido = file.readlines()
-
+ 
                                 recipe_id = None
                                 exposure_time = None
-                                image_time_stamp = None
+                                image_time_stamp = None  # Agregar para almacenar el Image Time Stamp
                                 blob_data = {}
                                 for i in range(1, 7):
                                     blob_key = f'Blob {i}'
@@ -133,13 +144,13 @@ def generar_estadisticos():
                                         'Max': None,
                                         'Area': None
                                     }
-
+ 
                                 for line in contenido:
                                     if "Recipe ID" in line:
                                         recipe_id = int(line.split(': ')[1])
                                     elif "Exposure Time" in line:
                                         exposure_time = int(line.split(': ')[1])
-                                    elif "Image Time Stamp" in line:
+                                    elif "Image Time Stamp" in line:  # Buscar el Image Time Stamp
                                         image_time_stamp = line.split(': ')[1].strip()
                                     elif "Blob" in line and "Enabled: True" in line:
                                         blob_number = int(line.split()[1])
@@ -156,7 +167,7 @@ def generar_estadisticos():
                                     elif "Blob" in line and "Area" in line:
                                         blob_number = int(line.split()[1])
                                         blob_data[f'Blob {blob_number}']['Area'] = int(line.split(': ')[1])
-
+ 
                                 if recipe_id is not None and exposure_time is not None and image_time_stamp is not None:
                                     camara = archivo[:19]
                                     datos = {'Camara': camara, 'Archivo': archivo, 'Recipe ID': recipe_id, 'Exposure Time': exposure_time, 'Image Time Stamp': image_time_stamp}
@@ -169,14 +180,22 @@ def generar_estadisticos():
                                                 f'{blob_key} Area': blob_info['Area']
                                             })
                                     valores.append(datos)
-
+ 
+            # Crear un DataFrame de Pandas con los valores de Recipe ID, Exposure Time, Image Time Stamp, Blob 1 Threshold, Blob 1 Min, Blob 1 Max y Blob 1 Area
             df = pd.DataFrame(valores)
+            # Obtener el nombre de la carpeta seleccionada
             nombre_carpeta = os.path.basename(carpeta_seleccionada)
+ 
+            # Guardar el DataFrame en un archivo de Excel con el nombre de la carpeta en la raíz de la carpeta seleccionada
             ruta_excel = os.path.join(carpeta_seleccionada, f'{nombre_carpeta}.xlsx')
+ 
+            # Agregar la columna con los nombres de los archivos .txt
             df['Archivo'] = [os.path.basename(path) for path in df['Archivo']]
-
+ 
+            # Escribir el DataFrame en el archivo Excel con filtro en la primera fila
             with pd.ExcelWriter(ruta_excel, engine='openpyxl') as writer:
                 df.to_excel(writer, index=False, header=True)
+                # Ajustar automáticamente el tamaño de las columnas al contenido
                 for column in writer.sheets['Sheet1'].columns:
                     max_length = 0
                     column = list(column)
@@ -188,18 +207,23 @@ def generar_estadisticos():
                             pass
                     adjusted_width = (max_length + 2) * 1.2
                     writer.sheets['Sheet1'].column_dimensions[column[0].column_letter].width = adjusted_width
-
+ 
+                # Resaltar en rojo las columnas que tienen campos vacíos
                 for col in writer.sheets['Sheet1'].iter_cols():
                     for cell in col:
                         if cell.value is None or cell.value == '':
                             cell.fill = PatternFill(start_color="F08080", end_color="F08080", fill_type="solid")
-
+ 
+            # Almacenar la ruta del archivo generado
             ruta_archivo_estadisticos = ruta_excel
             actualizar_etiqueta_ruta()
+ 
             messagebox.showinfo("Generar Estadísticos", f"Estadísticos generados y guardados en '{ruta_excel}'")
         else:
+            # Mostrar mensaje de error si no se encuentra ninguna subcarpeta 'TXT'
             messagebox.showerror("Error", "No se encontraron subcarpetas 'TXT' en la carpeta seleccionada.")
-
+ 
+ 
 # Función para abrir el archivo de estadísticos
 def abrir_estadisticos():
     global ruta_archivo_estadisticos
@@ -207,31 +231,32 @@ def abrir_estadisticos():
         os.startfile(ruta_archivo_estadisticos)
     else:
         messagebox.showinfo("Abrir Estadísticos", "Primero genera los estadísticos para abrir el archivo.")
-
+ 
 # Función para actualizar la etiqueta con la ruta del archivo de estadísticos
 def actualizar_etiqueta_ruta():
     if ruta_archivo_estadisticos:
         etiqueta_ruta.config(text=f"Ruta del archivo de estadísticos: {ruta_archivo_estadisticos}")
     else:
         etiqueta_ruta.config(text="")
-
+ 
 # Función para generar estadísticos de datos específicos
 def generar_estadisticos_datos_especificos():
+    # Función para procesar los parámetros ingresados y buscar el texto en los archivos .txt
     def procesar_parametros():
         parametros = ["Recipe ID", "Exposure Time", "Image Time Stamp"] + entrada_parametros.get().split(';')
         carpeta_seleccionada = filedialog.askdirectory(title="Seleccionar Carpeta")
-
+ 
         if not parametros:
             messagebox.showerror("Error", "Por favor ingresa al menos un parámetro.")
             return
-
+ 
         if not carpeta_seleccionada:
             messagebox.showerror("Error", "Debes seleccionar una carpeta.")
             return
-
+ 
         archivos_encontrados = []
-        nombres_archivos = []
-        camaras_encontradas = []
+        nombres_archivos = []  # Lista para almacenar los nombres de los archivos .txt encontrados
+        camaras_encontradas =[]
         for root, _, archivos in os.walk(carpeta_seleccionada):
             for archivo in archivos:
                 if archivo.endswith('.txt'):
@@ -242,18 +267,20 @@ def generar_estadisticos_datos_especificos():
                             archivos_encontrados.append(ruta_archivo)
                             nombres_archivos.append(archivo)
                             camaras_encontradas.append(archivo[:19])
-
+ 
         if not archivos_encontrados:
             messagebox.showinfo("Resultado", "No se encontraron coincidencias.")
             return
-
+ 
         generar_excel(archivos_encontrados, nombres_archivos, parametros, carpeta_seleccionada, camaras_encontradas)
-
+ 
+    # Función para generar un archivo Excel con los datos de los archivos encontrados
     def generar_excel(archivos, nombres_archivos, parametros, carpeta_seleccionada, camaras_encontradas):
-        datos = {'Camaras': camaras_encontradas, 'Archivo': nombres_archivos}
+                             
+        datos = {'Camaras': camaras_encontradas, 'Archivo': nombres_archivos}  # Inicializar el diccionario con los nombres de los archivos .txt
         for parametro in parametros:
             datos[parametro] = []
-
+ 
         for archivo in archivos:
             with open(archivo, 'r') as file:
                 contenido = file.readlines()
@@ -412,3 +439,4 @@ boton_cambiar_idioma.pack(pady=25, anchor="se", padx=10)
 # Mostrar la ventana principal
 root.mainloop()
 
+#Test to commit#Test to branch tacos de canasta
