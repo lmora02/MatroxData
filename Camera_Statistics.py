@@ -776,6 +776,7 @@ def obtener_datos_camara():
         canvas = tk.Canvas(frame_canvas, width=100, height=100)
         canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=1)
 
+
         # Añadir scrollbar vertical al canvas
         scrollbar_vertical = ttk.Scrollbar(frame_canvas, orient=tk.VERTICAL, command=canvas.yview)
         scrollbar_vertical.pack(side=tk.RIGHT, fill=tk.Y)
