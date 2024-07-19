@@ -355,12 +355,12 @@ def obtener_datos_camara():
                 conjunto_ip[0] = direccion_ip
 
         if direccion_ip:
-            #ping_exit_code = subprocess.call(['ping', '-n', '1', direccion_ip], stdout=subprocess.DEVNULL)
-            #if ping_exit_code == 0:
+            ping_exit_code = subprocess.call(['ping', '-n', '1', direccion_ip], stdout=subprocess.DEVNULL)
+            if ping_exit_code == 0:
             if 1 == 1:
                 try:
-                    #comando = f"net use \\\\{direccion_ip}\\IPC$ /user:NAM\\mtxuser Matrox"
-                    #subprocess.run(comando, shell=True, check=True)
+                    comando = f"net use \\\\{direccion_ip}\\IPC$ /user:NAM\\mtxuser Matrox"
+                    subprocess.run(comando, shell=True, check=True)
                     print(f"Conexión SMB establecida con {direccion_ip}")
 
                     #Oculta la ventana para ingresar la ip
@@ -372,9 +372,9 @@ def obtener_datos_camara():
                         mostrar_ventana_estado(direccion_ip)
 
                     monitor_running = True
-                    #if monitor_conexion is None or not monitor_conexion.is_alive():
-                        #monitor_conexion = threading.Thread(target=monitorizar_conexion, args=(direccion_ip,))
-                        #monitor_conexion.start()
+                    if monitor_conexion is None or not monitor_conexion.is_alive():
+                        monitor_conexion = threading.Thread(target=monitorizar_conexion, args=(direccion_ip,))
+                        monitor_conexion.start()
 
                 except subprocess.CalledProcessError as e:
                     messagebox.showerror("Error", f"No se pudo establecer la conexión SMB con {direccion_ip}: {str(e)}")
@@ -410,8 +410,8 @@ def obtener_datos_camara():
             def cerrar_conexion():
                 global monitor_running, ventana_estado, ventana_archivos
                 monitor_running = False
-                #comando_desconectar = f"net use \\\\{direccion_ip}\\IPC$ /delete"
-                #subprocess.run(comando_desconectar, shell=True, check=True)
+                comando_desconectar = f"net use \\\\{direccion_ip}\\IPC$ /delete"
+                subprocess.run(comando_desconectar, shell=True, check=True)
                 print(f"Conexión SMB cerrada con {direccion_ip}")
                 ventana_estado.destroy()
                 ventana_estado = None
@@ -714,7 +714,7 @@ def obtener_datos_camara():
                 boton_seleccionar.config(text="Select all")
             else:
                 seleccionar_ips.title("Seleccionar IPs")
-                boton_aceptar.config("Aceptar")
+                boton_aceptar.config(text="Aceptar")
                 boton_deseleccionar.config(text="Deseleccionar todos")
                 boton_seleccionar.config(text="Seleccionar todos")
 
