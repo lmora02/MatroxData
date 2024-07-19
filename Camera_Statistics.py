@@ -385,7 +385,18 @@ def obtener_datos_camara():
             messagebox.showerror("Error", "Debes ingresar una dirección IP válida.")
 
     def mostrar_ventana_estado(direccion_ip):
-        global ventana_estado, direccion_ip_global, ventana_archivos
+        global ventana_estado, direccion_ip_global, ventana_archivos, idioma
+
+        #Cambiar idioma de la ventana
+        def actualizar_idioma_estado():
+            if idioma == 'EN':
+                ventana_estado.title("Connection Status")
+                estado_label.config(text=f"IP Adress: {direccion_ip}\nStatus: Connected")
+                boton_cerrar.config(text="Close connection")
+            else:
+                ventana_estado.title("Estado de Conexión")
+                boton_cerrar.config(text="Cerrar conexión")
+                estado_label.config(text=f"Dirección IP: {direccion_ip}\nEstado: Conectado")
 
         if ventana_estado is None:
             ventana_estado = tk.Toplevel(root)
@@ -406,19 +417,29 @@ def obtener_datos_camara():
                 ventana_estado = None
                 ventana_archivos.destroy()
                 ventana_archivos = None
-                messagebox.showinfo("Conexión Cerrada", f"Conexión cerrada con {direccion_ip}.")
+                if idioma == 'EN':
+                    messagebox.showinfo("Connection Closed", f"The connection to {direccion_ip} has been lost.")
+                else:
+                    messagebox.showinfo("Conexión Cerrada", f"Conexión cerrada con {direccion_ip}.")
                 ventana_archivo.deiconify()
 
             def on_closing():
                 cerrar_conexion()
-                messagebox.showinfo("Conexion Perdida", f"Se ha perdido la conexión con {direccion_ip}.")
+                if idioma == 'EN':
+                    messagebox.showinfo("Connection Lost", f"The connection to {direccion_ip} has been lost.")
+                else:
+                    messagebox.showinfo("Conexion Perdida", f"Se ha perdido la conexión con {direccion_ip}.")
 
             boton_cerrar = ttk.Button(ventana_estado, text="Cerrar Conexión", command=cerrar_conexion)
             boton_cerrar.pack(pady=10)
-
+            actualizar_idioma_estado()
             ventana_estado.protocol("WM_DELETE_WINDOW", on_closing)
         else:
-            estado_label.config(text=f"Dirección IP: {direccion_ip}\nEstado: Conectado")
+            if idioma == 'EN':
+                estado_label.config(text=f"IP Adress: {direccion_ip}\nStatus: Connected")
+            else:
+                estado_label.config(text=f"Dirección IP: {direccion_ip}\nEstado: Conectado")
+
 
     def monitorizar_conexion(direccion_ip):
         global direccion_ip_global, ventana_estado
@@ -436,6 +457,27 @@ def obtener_datos_camara():
 
     def abrir_ventana_seleccion_archivos():
         global ventana_archivos, progress_bar, progress_label, ventana_archivo, ventana_estado
+        #Cambiar de idioma
+        def actualizar_idioma_ip():
+            global idioma
+            if idioma == "EN":
+                ventana_archivos.title("Choose files")
+                etiqueta_instrucciones.config(text="Select the files to copy")
+                etiqueta_combo.config(text="Selects the result of the inspection")
+                combo_inspeccion.config(values=["Pass", "Fail", "All Inspections"])
+                progress_label.config(text="Copy Progress:")
+                boton_cerrar.config(text="Close")
+                boton_extraer.config(text="Copy files")
+            else:
+                ventana_archivos.title("Selecciona los archivos")
+                etiqueta_instrucciones.config(text="Selecciona los archivos a copiar")
+                etiqueta_combo.config(text="Selecciona el resultado de la inspección")
+                combo_inspeccion.config(values=["Pass", "Fail", "Todas las inspecciones"])
+                progress_label.config(text="Progreso de Extracción:")
+                boton_cerrar.config(text="Cerrar")
+                boton_extraer.config(text="Copiar archivos")
+
+
         ventana_archivo.withdraw()
         ventana_archivos = tk.Toplevel(root)
         ventana_archivos.title("Seleccionar Archivos a Copiar")
@@ -464,8 +506,9 @@ def obtener_datos_camara():
         etiqueta_combo.pack(pady=10)
 
         # ComboBox para seleccionar inspección
-        combo_inspeccion = ttk.Combobox(ventana_archivos, values=["Pass", "Fail", "Todas las inspecciones"])
+        combo_inspeccion = ttk.Combobox(ventana_archivos, values=["Pass", "Fail", "All files"])
         combo_inspeccion.pack(pady=10)
+        combo_inspeccion.set("Pass")  # Aquí estableces el valor por defecto
 
         # Widget de progreso inicialmente oculto
         progress_label = ttk.Label(ventana_archivos, text="Progreso de Extracción:")
@@ -490,6 +533,7 @@ def obtener_datos_camara():
 
         boton_cerrar = ttk.Button(ventana_archivos, text="Cerrar", command=cerrar_seleccion)
         boton_cerrar.pack(pady=10)
+        actualizar_idioma_ip()
         ventana_archivos.protocol("WM_DELETE_WINDOW", cerrar_seleccion)
     def extraer_archivos(var_jpg, var_png, var_txt, inspeccion=None):
         global conjunto_ip, progess_bar, progress_label, ventana_archivos
@@ -500,8 +544,11 @@ def obtener_datos_camara():
         if inspeccion == "Todas las inspecciones":
             inspeccion = None
 
+        if inspeccion == "All Inspections":
+            inspeccion = None
+
         ventana_archivos.attributes('-topmost', False)
-        carpeta_destino_padre = filedialog.askdirectory(title="Selecciona la carpeta de destino")
+        carpeta_destino_padre = filedialog.askdirectory(title="Select the destination folder")
         ventana_archivos.attributes('-topmost', True)
         if not carpeta_destino_padre:
             return
@@ -519,7 +566,10 @@ def obtener_datos_camara():
         progress_bar.pack()  # Mostrar el widget de progreso
 
         if not extensiones_seleccionadas:
-            messagebox.showwarning("Advertencia", "No se ha seleccionado ningún tipo de archivo para copiar.")
+            if idioma == 'EN':
+                messagebox.showwarning("Warning", "No file type has been selected for copying.")
+            else:
+                messagebox.showwarning("Advertencia", "No se ha seleccionado ningún tipo de archivo para copiar.")
             return
 
         for ip in conjunto_ip:
@@ -563,7 +613,10 @@ def obtener_datos_camara():
                                 print(f"Error al copiar el archivo {ruta_completa_origen}: {str(e)}")
             i = i + 1
 
-        messagebox.showinfo("Extracción Completa", "Archivos extraídos correctamente.")
+        if idioma == 'EN':
+            messagebox.showinfo("Completed", "Files copied correctly")
+        else:
+            messagebox.showinfo("Extracción Completa", "Archivos extraídos correctamente.")
         progress_bar.pack_forget()  # Ocultar el widget de progreso al finalizar
 
     def abrir_ventana_credenciales(direccion_ip):
@@ -618,6 +671,16 @@ def obtener_datos_camara():
     def mostrar_ventana_ip():
         global ventana_ip, direccion_ip
         direccion_ip = None
+        def actualizar_idioma_ip():
+            global idioma
+            if idioma == "EN":
+                ventana_ip.title("Enter IP")
+                etiqueta_ip.config(text="IP Address")
+                boton_procesar.config(text="Accept")
+            else:
+                ventana_ip.title("Ingresar IP")
+                etiqueta_ip.config(text="Dirección IP")
+                boton_procesar.config(text="Aceptar")
         ventana_ip = tk.Toplevel(root)
         ventana_ip.title("Ingrese la Dirección IP")
         ventana_ip.geometry("300x150+275+280")
@@ -632,6 +695,8 @@ def obtener_datos_camara():
 
         boton_procesar = ttk.Button(ventana_ip, text="Procesar", command=procesar_direccion_ip)
         boton_procesar.pack(pady=10)
+
+        actualizar_idioma_ip()
         ventana_ip.grab_set()
 
     def extraer_ips_desde_excel():
@@ -742,9 +807,21 @@ def obtener_datos_camara():
         #Ocultar ventana principal
         root.withdraw()
 
+        #Cambiar idioma
+        def actualizar_idioma_archivo():
+            global idioma
+            if idioma == "EN":
+                btn_ingresar_ip.config(text="Enter IP")
+                btn_extraer_ips.config(text="Get IP from excel")
+                btn_salir.config(text="Back")
+            else:
+                btn_ingresar_ip.config(text="Ingresar IP")
+                btn_extraer_ips.config(text="Obetenr IP desde un excel")
+                btn_salir.config(text="Atras")
+
         #Crear ventana para seleccionar ingreso de la IP
         ventana_archivo = tk.Toplevel(root)
-        ventana_archivo.title("Inspection Tools Statistics V1.01")
+        ventana_archivo.title("Get Data from Camara")
         ventana_archivo.geometry("450x300+200+200")
         ventana_archivo.resizable(False, False)
         # Combinar la ruta del directorio actual con el nombre de la imagen
@@ -770,7 +847,6 @@ def obtener_datos_camara():
         def back_to_main():
             ventana_archivo.withdraw()
             root.deiconify()
-
         # Botón para "Ingresar IP"
         btn_ingresar_ip = ttk.Button(ventana_archivo, text="Ingresar IP", command=mostrar_ventana_ip)
         btn_ingresar_ip.pack(pady=10)
@@ -788,6 +864,8 @@ def obtener_datos_camara():
         btn_salir = ttk.Button(ventana_archivo, text="Atras", command=back_to_main)
         btn_salir.pack(pady=10)
 
+        actualizar_idioma_archivo()
+
         ventana_archivo.protocol("WM_DELETE_WINDOW", back_to_main)
 
     mostrar_ventana_archivo()
@@ -800,7 +878,6 @@ def cambiar_idioma():
     else:
         idioma = 'EN'
     actualizar_texto_elementos()
-
 # Función para actualizar el texto de los elementos de la interfaz según el idioma seleccionado
 def actualizar_texto_elementos():
     if idioma == 'EN':
@@ -809,22 +886,24 @@ def actualizar_texto_elementos():
         estadisticos_button.config(text="Generate Statistics")
         abrir_estadisticos_button.config(text="Open Statistics")
         estadisticos_especificos_button.config(text="Specific Data Statistics")
-        boton_cambiar_idioma.config(text="Spanish")
+        boton_cambiar_idioma.config(text="Español")
         mensaje_label.config(text="Select a main folder to classify files.")
         encabezado_label.config(text="—————————————| FUNCTIONS |——————————————")
         encabezadoSPECIAL_label.config(text="—————————| SPECIAL FUNCTIONS |————————————")
         instrucciones_label.config(text="———————————| INSTRUCTIONS |—————————————\n\n1. Select the folder to select the files to be classified.\n2. Depending on the data of interest, click on 'Generate\n    Stadistics' or if you need any other information click on the button\n    'Specific Data Statistics'.")
+        boton_obtener_datos.config(text="Get camera data")
     else:
         root.title("Generador de Estadísticas de Datos")
         seleccionar_button.config(text="Clasificar Archivos")
         estadisticos_button.config(text="Generar Estadísticos")
         abrir_estadisticos_button.config(text="Abrir Estadísticos")
         estadisticos_especificos_button.config(text="Estadísticos Datos Específicos")
-        boton_cambiar_idioma.config(text="Inglés")
+        boton_cambiar_idioma.config(text="English")
         mensaje_label.config(text="Selecciona una carpeta principal para clasificar archivos.")
         encabezado_label.config(text="—————————————| FUNCIONES |——————————————")
         encabezadoSPECIAL_label.config(text="—————————| FUNCIONES ESPECIALES |————————————")
         instrucciones_label.config(text="———————————| INSTRUCCIONES |—————————————\n\n1. Seleccionar la carpeta para seleccionar los archivos a clasificar.\n2. Dependiendo de los datos de interes, dar click en el boton de 'Generar\n    Estadistico' o si se necesita algún otro dato dar click en el botón\n    'Estadisticos Datos Especificos'.")
+        boton_obtener_datos.config(text="Obtener datos de la camara")
 
 # Configuración de la ventana principal
 root = tk.Tk()
