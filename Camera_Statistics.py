@@ -442,14 +442,18 @@ def obtener_datos_camara():
 
 
     def monitorizar_conexion(direccion_ip):
-        global direccion_ip_global, ventana_estado
+        global direccion_ip_global, ventana_estado, idioma
 
         while monitor_running:
             ping_exit_code = subprocess.call(['ping', '-n', '1', direccion_ip], stdout=subprocess.DEVNULL)
             if ping_exit_code != 0:
                 if direccion_ip == direccion_ip_global:
-                    estado_label.config(text=f"Dirección IP: {direccion_ip}\nEstado: Desconectado")
-                    messagebox.showwarning("Conexión Perdida", f"Se ha perdido la conexión con {direccion_ip}.")
+                    if idioma == 'EN':
+                        estado_label.config(text=f"IP Adress: {direccion_ip}\nStatus: Connected")
+                        messagebox.showwarning("Connection Lost", f"The connection to {direccion_ip} has been lost.")
+                    else:
+                        estado_label.config(text=f"Dirección IP: {direccion_ip}\nEstado: Desconectado")
+                        messagebox.showwarning("Conexión Perdida", f"Se ha perdido la conexión con {direccion_ip}.")
                     ventana_estado.destroy()
                     break
 
@@ -700,20 +704,42 @@ def obtener_datos_camara():
         ventana_ip.grab_set()
 
     def extraer_ips_desde_excel():
-        global conjunto_ip, conjunto_estacion
+        global conjunto_ip, conjunto_estacion, idioma
 
-        archivo_excel = filedialog.askopenfilename(filetypes=[("Archivos de Excel", "*.xlsx;*.xls")])
+        def actualizar_idioma_ipsexcel():
+            if idioma == 'EN':
+                seleccionar_ips.title("Select IPs")
+                boton_aceptar.config(text="OK")
+                boton_deseleccionar.config(text="Deselect all")
+                boton_seleccionar.config(text="Select all")
+            else:
+                seleccionar_ips.title("Seleccionar IPs")
+                boton_aceptar.config("Aceptar")
+                boton_deseleccionar.config(text="Deseleccionar todos")
+                boton_seleccionar.config(text="Seleccionar todos")
+
+        if idioma == 'EN':
+            archivo_excel = filedialog.askopenfilename(filetypes=[("Excel files", "*.xlsx;*.xls")])
+        else:
+            archivo_excel = filedialog.askopenfilename(filetypes=[("Archivos de Excel", "*.xlsx;*.xls")])
+
         if not archivo_excel:
             return
 
         df = pd.read_excel(archivo_excel)
 
         if 'Estacion' not in df.columns:
-            messagebox.showerror("Error", "El archivo de Excel no contiene una columna 'Estacion'.")
+            if idioma == 'EN':
+                messagebox.showerror("Error", "The Excel file does not contain a 'Estacion' column.")
+            else:
+                messagebox.showerror("Error", "El archivo de Excel no contiene una columna 'Estacion'.")
             return
 
         if 'IP' not in df.columns:
-            messagebox.showerror("Error", "El archivo de Excel no contiene una columna 'IP'.")
+            if idioma == 'EN':
+                messagebox.showerror("Error", "The Excel file does not contain a 'IP' column.")
+            else:
+                messagebox.showerror("Error", "El archivo de Excel no contiene una columna 'IP'.")
             return
 
         estaciones_disponibles = df['Estacion'].dropna().tolist()
@@ -729,7 +755,10 @@ def obtener_datos_camara():
         seleccionar_ips.resizable(False, False)
         seleccionar_ips.grab_set()
 
-        ttk.Label(seleccionar_ips, text="Seleccione las IPs a procesar:").pack(pady=10)
+        if idioma == 'EN':
+            ttk.Label(seleccionar_ips, text="Select the ips to be processed:").pack(pady=10)
+        else:
+            ttk.Label(seleccionar_ips, text="Seleccione las IPs a procesar:").pack(pady=10)
 
         selected_ips = []
         checkboxes = []
@@ -763,7 +792,7 @@ def obtener_datos_camara():
         for ip in ips_disponibles:
             estacion = ip_estacion_dict.get(ip, "Desconocida")
             var_ip = tk.IntVar()
-            checkbox_text=f"Estacion:{estacion} - IP:{ip}"
+            checkbox_text=f"{estacion} - IP:{ip}"
             checkbox = ttk.Checkbutton(frame_checkboxes, text=checkbox_text, variable=var_ip, command=lambda ip=ip: toggle_ip(ip))
             checkbox.var = var_ip  # Guardar referencia a la variable IntVar
             checkbox.pack(anchor='w')
@@ -790,17 +819,23 @@ def obtener_datos_camara():
             conjunto_ip = selected_ips
             conjunto_estacion = [ip_estacion_dict[ip] for ip in conjunto_ip]
             seleccionar_ips.destroy()
-            messagebox.showinfo("Selección Completa",
-                                f"IPs seleccionadas: {conjunto_ip}\nEstaciones seleccionadas: {conjunto_estacion}")
+            if idioma == 'EN':
+                messagebox.showinfo("Complete Selection",
+                                    f"Selected IPs: {conjunto_ip}\nSelected stations:{conjunto_estacion}")
+            else:
+                messagebox.showinfo("Selección Completa",
+                                    f"IPs seleccionadas: {conjunto_ip}\nEstaciones seleccionadas: {conjunto_estacion}")
             for ip in conjunto_ip:
                 procesar_direccion_ip(ip)
 
-        ttk.Button(seleccionar_ips, text="Aceptar", command=procesar_seleccion).pack(pady=10)
+        boton_aceptar = ttk.Button(seleccionar_ips, text="Aceptar", command=procesar_seleccion)
+        boton_aceptar.pack(pady=10)
 
         boton_deseleccionar = ttk.Button(seleccionar_ips, text="Deseleccionar Todo", command=deseleccionar_todo)
         boton_deseleccionar.pack_forget()
         boton_seleccionar = ttk.Button(seleccionar_ips, text="Seleccionar Todo", command=seleccionar_todo)
         boton_seleccionar.pack(pady=10)
+        actualizar_idioma_ipsexcel()
 
     def mostrar_ventana_archivo():
         global imagen_matroxs, imagen_vistas, ventana_archivo
