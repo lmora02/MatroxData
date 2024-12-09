@@ -99,7 +99,10 @@ def seleccionar_carpeta_principal():
     carpeta_principal = filedialog.askdirectory()
     if carpeta_principal:
         clasificar_archivos(carpeta_principal)
-        mensaje_label.config(text="Archivos clasificados correctamente.")
+        if(idioma == "EN"):
+            mensaje_label.config(text="Archivos clasificados correctamente.")
+        else:
+            mensaje_label.config(text="Files classified correctly.")
 
 # Función para buscar todas las subcarpetas llamadas 'TXT'
 def buscar_subcarpetas_txt(carpeta):
@@ -114,7 +117,11 @@ def buscar_subcarpetas_txt(carpeta):
 def generar_estadisticos():
     global carpeta_seleccionada, ruta_archivo_estadisticos
     # Seleccionar una carpeta
-    carpeta_seleccionada = filedialog.askdirectory(title="Seleccionar Carpeta")
+    if (idioma == "EN"):
+        carpeta_seleccionada = filedialog.askdirectory(title="Select Folder")
+    else:
+        carpeta_seleccionada = filedialog.askdirectory(title="Seleccionar Carpeta")
+
     if carpeta_seleccionada:
         # Buscar todas las subcarpetas llamadas 'TXT'
         subcarpetas_txt = buscar_subcarpetas_txt(carpeta_seleccionada)
@@ -230,7 +237,10 @@ def abrir_estadisticos():
     if ruta_archivo_estadisticos:
         os.startfile(ruta_archivo_estadisticos)
     else:
-        messagebox.showinfo("Abrir Estadísticos", "Primero genera los estadísticos para abrir el archivo.")
+        if(idioma=="EN"):
+            messagebox.showinfo("Open Statistics", "First generate the statistics to open the file.")
+        else:
+            messagebox.showinfo("Abrir Estadísticos", "Primero genera los estadísticos para abrir el archivo.")
  
 # Función para actualizar la etiqueta con la ruta del archivo de estadísticos
 def actualizar_etiqueta_ruta():
@@ -319,14 +329,24 @@ def generar_estadisticos_datos_especificos():
     ventana_parametros.title("Generar Estadísticos de Datos Específicos")
     ventana_parametros.geometry("400x200")
 
-    etiqueta_parametros = ttk.Label(ventana_parametros, text="Parámetros (separados por ';'):")
-    etiqueta_parametros.pack(pady=10)
+    if (idioma == "EN"):
+        etiqueta_parametros = ttk.Label(ventana_parametros, text="Parameters (separated by ';'):")
+        etiqueta_parametros.pack(pady=10)
 
-    entrada_parametros = ttk.Entry(ventana_parametros, width=50)
-    entrada_parametros.pack(pady=10)
+        entrada_parametros = ttk.Entry(ventana_parametros, width=50)
+        entrada_parametros.pack(pady=10)
 
-    boton_procesar = ttk.Button(ventana_parametros, text="Procesar", command=procesar_parametros)
-    boton_procesar.pack(pady=10)
+        boton_procesar = ttk.Button(ventana_parametros, text="Process", command=procesar_parametros)
+        boton_procesar.pack(pady=10)
+    else:
+        etiqueta_parametros = ttk.Label(ventana_parametros, text="Parámetros (separados por ';'):")
+        etiqueta_parametros.pack(pady=10)
+
+        entrada_parametros = ttk.Entry(ventana_parametros, width=50)
+        entrada_parametros.pack(pady=10)
+
+        boton_procesar = ttk.Button(ventana_parametros, text="Procesar", command=procesar_parametros)
+        boton_procesar.pack(pady=10)
 
 
 def obtener_datos_camara():
@@ -736,27 +756,31 @@ def actualizar_texto_elementos():
         estadisticos_button.config(text="Generate Statistics")
         abrir_estadisticos_button.config(text="Open Statistics")
         estadisticos_especificos_button.config(text="Specific Data Statistics")
-        boton_cambiar_idioma.config(text="Spanish")
+        boton_cambiar_idioma.config(text="Español")
         mensaje_label.config(text="Select a main folder to classify files.")
         encabezado_label.config(text="—————————————| FUNCTIONS |——————————————")
         encabezadoSPECIAL_label.config(text="—————————| SPECIAL FUNCTIONS |————————————")
         instrucciones_label.config(text="———————————| INSTRUCTIONS |—————————————\n\n1. Select the folder to select the files to be classified.\n2. Depending on the data of interest, click on 'Generate\n    Stadistics' or if you need any other information click on the button\n    'Specific Data Statistics'.")
+        boton_obtener_datos.config(text="Obtaining data from the camera")
+        encabezadoIdioma_label.config(text="Change language:")
     else:
         root.title("Generador de Estadísticas de Datos")
         seleccionar_button.config(text="Clasificar Archivos")
         estadisticos_button.config(text="Generar Estadísticos")
         abrir_estadisticos_button.config(text="Abrir Estadísticos")
         estadisticos_especificos_button.config(text="Estadísticos Datos Específicos")
-        boton_cambiar_idioma.config(text="Inglés")
+        boton_cambiar_idioma.config(text="English")
         mensaje_label.config(text="Selecciona una carpeta principal para clasificar archivos.")
         encabezado_label.config(text="—————————————| FUNCIONES |——————————————")
         encabezadoSPECIAL_label.config(text="—————————| FUNCIONES ESPECIALES |————————————")
         instrucciones_label.config(text="———————————| INSTRUCCIONES |—————————————\n\n1. Seleccionar la carpeta para seleccionar los archivos a clasificar.\n2. Dependiendo de los datos de interes, dar click en el boton de 'Generar\n    Estadistico' o si se necesita algún otro dato dar click en el botón\n    'Estadisticos Datos Especificos'.")
+        boton_obtener_datos.config(text="Obtener datos de la cámara")
+        encabezadoIdioma_label.config(text="Cambiar idioma:")
 
 # Configuración de la ventana principal
 root = tk.Tk()
 root.title("Inspection Tools Statistics V1.01")
-root.geometry("450x500")  # Establecer el tamaño inicial de la ventana
+root.geometry("450x550")  # Establecer el tamaño inicial de la ventana
 root.resizable(False, False)  # Evitar que la ventana se redimensione
 
 # Estilo de Material Design
@@ -827,9 +851,15 @@ etiqueta_ruta.place(x=1000, y=1000)
 boton_obtener_datos = ttk.Button(root, text="Obtener datos de la cámara", command=obtener_datos_camara, style="TButton")
 boton_obtener_datos.pack(pady=5, anchor="w", padx=115)
 
+# Etiqueta para mostrar las encabezado del boton cambiar idioma
+encabezadoIdioma_label = ttk.Label(root, text="Cambiar idioma:")
+encabezadoIdioma_label.place(relx=1.0, rely=1.0, x=-100, y=-25, anchor="se")
+
+
 # Botón para cambiar el idioma de la aplicación
-boton_cambiar_idioma = ttk.Button(root, text="Inglés", command=cambiar_idioma, style="TButton", width=10)
-boton_cambiar_idioma.pack(pady=25, anchor="se", padx=10)
+boton_cambiar_idioma = ttk.Button(root, text="English", command=cambiar_idioma, style="TButton", width=10)
+boton_cambiar_idioma.place(relx=1.0, rely=1.0, x=-10, y=-10, anchor="se")
+
 
 # Mostrar la ventana principal
 root.mainloop()
